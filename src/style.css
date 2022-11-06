@@ -1,4 +1,59 @@
 .device-box {
+  border: 1px solid @borders;
+  border-radius: 0.5rem;
+  
+  padding: 1rem;
+
+  margin: 0.5rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  background-color: @theme_unfocused_base_color
+}
+
+dropdown {
+  max-width: 32rem;
+  width: 32rem;
+  margin:1rem;
+}
+
+text {
+  margin: 1rem;
+  padding: 0.5rem;
+  border: 1px solid @borders;
+  border-radius: 0.25rem;
+  background-color: @theme_unfocused_base_color
+}
+
+.device-elem {
+ gap: 3rem;
+ display: flex;
+}
+
+.device-label {
+
+  margin-left: 1rem;
+  margin-right: 1rem;
+}
+
+.device-check {
+  margin-left: 1rem;
+  margin-right: 1rem;
+}
+
+
+.form {
+  margin: 0.75rem;
+}
+
+
+.form-label {
+  margin-right: auto;
+}
+
+.form-input {
+  margin: auto;
+  float: right;
 }

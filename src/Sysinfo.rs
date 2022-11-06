@@ -11,7 +11,7 @@ pub struct Partition {
   pub rm: bool,
   pub size: String,
   pub ro: bool,
-  pub mountpoints: Vec<String>
+  pub mountpoints: Vec<Option<String>>
 }
 
 #[derive(Serialize, Deserialize)]

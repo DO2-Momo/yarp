@@ -7,6 +7,7 @@ use gtk::{
   Box, 
   Orientation,
   Label,
+  Text,
   StyleContext,
   CssProvider
 };
@@ -55,6 +56,25 @@ fn build_ui(app: &Application) {
   // Get devices data
   let device_data: Sysinfo::Devices = Sysinfo::get_devices();
   
+
+  // Create a button with label and margins
+  let button = Button::builder()
+    .label("Confirm")
+    .margin_top(12)
+    .margin_bottom(12)
+    .margin_start(12)
+    .margin_end(12)
+    .build();
+
+  let main_box = Box::builder()
+    .orientation(Orientation::Vertical)
+    .margin_top(12)
+    .margin_bottom(12)
+    .margin_start(12)
+    .margin_end(12)
+    .name("box")
+    .build();
+
   // Format to "name  size"
   let mut device_names: Vec<String> = Vec::<String>::new();
   for i in 0..device_data.blockdevices.len() {
@@ -67,37 +87,35 @@ fn build_ui(app: &Application) {
   // to &str vector
   let device_labels: Vec<&str> = device_names.iter().map(|s| s as &str).collect();
 
+
   // Create dropdown menu
   let device_menu = DropDown::from_strings(&device_labels);
 
-  // Create a button with label and margins
-  let button = Button::builder()
-    .label("Confirm")
-    .margin_top(12)
-    .margin_bottom(12)
-    .margin_start(12)
-    .margin_end(12)
-    .build();
+
+  let device_box = Box::builder()
+      .css_classes(vec![String::from("dropdown")])
+      .build();
+
+  device_box.append(&device_menu);
+
+  let form = Components::form();
 
   // Connect to "clicked" signal of `button`
   button.connect_clicked(move |button| {
     // Set the label to "Hello World!" after the button has been clicked on
-    button.set_label("Hello World!");
+
+    println!("{}", form.data.username.text().as_str());
+    println!("{}", form.data.hostname.text().as_str());
+    println!("{}", form.data.password.text().as_str());
+    println!("{}", form.data.cpassword.text().as_str());
+    println!("{}", device_menu.selected());
   });
 
-  let main_box = Box::builder()
-    .orientation(Orientation::Vertical)
-    .margin_top(12)
-    .margin_bottom(12)
-    .margin_start(12)
-    .margin_end(12)
-    .name("box")
-    .build();
 
-  BoxExt::append(&main_box, &device_menu);
-
-  BoxExt::append(&main_box, &button);
-
+    
+  main_box.append(&device_box);
+  main_box.append(&form.widget);
+  main_box.append(&button);
 
   // Create a window
   let window = ApplicationWindow::builder()
