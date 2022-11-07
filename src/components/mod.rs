@@ -7,12 +7,16 @@ use gtk::{
   InputPurpose,
   Justification,
   Align,
-  EntryBuffer
+  EntryBuffer,
+  Button,
+  Application,
+  ApplicationWindow
 };
 use gtk::prelude::*;
 
 pub mod control;
 use control::{Form, FormData};
+
 
 pub fn formField(label: &str, buf: &EntryBuffer, hidden: bool ) -> Box {
   let input = Text::builder()
@@ -129,12 +133,23 @@ pub fn getLabel(name: &str, size: &str) -> String {
   return buf.join("     ");
 }
 
-pub fn prompt_user() {
+pub fn success() -> Box {
 
-  // GENERATE A POPUP WITH 'YES'/'NO' BTNS AND RETURN WHEN USER CONFIRMS 'YES'
+  let button = Button::builder()
+    .label("Ok").build();
 
+  let label = Label::builder()
+    .label("Success").build();
 
-  // MAKE SURE USER IS PROMPTED TO ENSURE NO DRIVES GET CLEARED
+  let success = Box::builder().visible(false).build();
 
-  return;
+  success.append(&label);
+  success.append(&button);
+
+  return success;
+
+}
+
+pub fn prompt_user(data: &FormData)  {
+
 }

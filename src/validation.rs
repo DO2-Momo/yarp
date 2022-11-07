@@ -1,8 +1,6 @@
 
 
 use crate::config::UserData;
-use crate::components::prompt_user;
-
 use crate::install::install;
 
 pub fn validate_config(data: &UserData) {
@@ -12,7 +10,13 @@ pub fn validate_config(data: &UserData) {
         return;
     }
 
-    prompt_user();
+    // brute DEBUG Safety for my build ;)
+    if data.device.name == "nvme0n1" {
+      return; // TODO; REMOVE THIS
+    }; 
+
+
+
     install(data);
 
     return;

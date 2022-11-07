@@ -1,0 +1,15 @@
+linux-lts
+linux-firmware
+base
+base-devel
+grub
+efibootmgr
+linux-headers
+sof-firmware
+dhcpcd
+net-tools
+networkmanager
+git
+nano
+neofetch
+htop

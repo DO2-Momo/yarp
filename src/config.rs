@@ -12,3 +12,7 @@ pub struct UserData<'a> {
   pub device: &'a Device,
 }
 
+pub struct PartData<'a> {
+  pub fs: &'a str,
+  pub args: Vec<&'a str>
+}
