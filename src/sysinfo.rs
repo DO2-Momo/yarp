@@ -5,20 +5,20 @@ use std::str;
 use serde::Deserialize;
 use serde::Serialize;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Partition {
   pub name: String,
   pub rm: bool,
-  pub size: String,
+  pub size: u128,
   pub ro: bool,
-  pub mountpoints: Vec<String>
+  pub mountpoints: Vec<Option<String>>
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Device {
   pub name: String,
   pub rm: bool,
-  pub size: String,
+  pub size: u128,
   pub ro: bool,
   pub children: Option<Vec<Partition>>
 }
@@ -30,7 +30,7 @@ pub struct Devices {
 
 pub fn get_devices() -> Devices {
   let raw_data = Command::new("lsblk")
-    .arg("-J")
+    .args(vec!["-J", "-b"])
     .output()
     .expect("Failed to execute lsblk");
   
