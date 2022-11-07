@@ -11,19 +11,8 @@ use gtk::{
 };
 use gtk::prelude::*;
 
-
-pub struct FormData {
-    pub username: EntryBuffer,
-    pub hostname: EntryBuffer,
-    pub password: EntryBuffer,
-    pub cpassword: EntryBuffer,
-} 
-
-
-pub struct Form {
-    pub widget: Box,
-    pub data: FormData
-}
+pub mod control;
+use control::{Form, FormData};
 
 pub fn formField(label: &str, buf: &EntryBuffer, hidden: bool ) -> Box {
   let input = Text::builder()
@@ -65,7 +54,7 @@ pub fn form() -> Form {
   let pbuf = EntryBuffer::builder().build();
   let cbuf = EntryBuffer::builder().build();
 
-  let formData: FormData = FormData {
+  let formData = FormData {
     username: ubuf,
     hostname: hbuf,
     password: pbuf,
@@ -130,4 +119,22 @@ pub fn DeviceRow(name: &str, size: &str) -> Box {
   );
 
   return device_row;
+}
+
+pub fn getLabel(name: &str, size: &str) -> String {
+  let mut buf: Vec<&str> = Vec::<&str>::new();
+  buf.push(name);
+  buf.push(size);
+
+  return buf.join("     ");
+}
+
+pub fn prompt_user() {
+
+  // GENERATE A POPUP WITH 'YES'/'NO' BTNS AND RETURN WHEN USER CONFIRMS 'YES'
+
+
+  // MAKE SURE USER IS PROMPTED TO ENSURE NO DRIVES GET CLEARED
+
+  return;
 }

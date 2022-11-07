@@ -13,20 +13,20 @@ use gtk::{
 };
 use gtk::gdk::Display;
 use std::str;
-mod Sysinfo;
-mod Components;
+mod sysinfo;
+mod components;
+mod validation;
+mod install;
+mod config;
+
+use config::{User, UserData};
 
 const APP_ID: &str = "org.gtk_rs.yarp";
 
-fn getLabel(name: &str, size: &str) -> String {
-  let mut buf: Vec<&str> = Vec::<&str>::new();
-  buf.push(name);
-  buf.push(size);
-
-  return buf.join("  ");
-}
 
 fn main() {
+
+
     // Create a new application
     let app = Application::builder().application_id(APP_ID).build();
 
@@ -54,8 +54,7 @@ fn load_css() {
 fn build_ui(app: &Application) {
 
   // Get devices data
-  let device_data: Sysinfo::Devices = Sysinfo::get_devices();
-  
+  let device_data: sysinfo::Devices = sysinfo::get_devices();
 
   // Create a button with label and margins
   let button = Button::builder()
@@ -78,10 +77,12 @@ fn build_ui(app: &Application) {
   // Format to "name  size"
   let mut device_names: Vec<String> = Vec::<String>::new();
   for i in 0..device_data.blockdevices.len() {
-    device_names.push(getLabel(
+    let size_gb:f32 = (( device_data.blockdevices[i].size / 10000000 ) as f32 ) / 100 as f32;
+    device_names.push(components::getLabel(
       &device_data.blockdevices[i].name,
-      &device_data.blockdevices[i].size
+      &size_gb.to_string()
     ));
+  
   }
 
   // to &str vector
@@ -98,21 +99,45 @@ fn build_ui(app: &Application) {
 
   device_box.append(&device_menu);
 
-  let form = Components::form();
+  let form = components::form();
 
   // Connect to "clicked" signal of `button`
   button.connect_clicked(move |button| {
-    // Set the label to "Hello World!" after the button has been clicked on
 
+    // --- DEBUG ---                    //
     println!("{}", form.data.username.text().as_str());
     println!("{}", form.data.hostname.text().as_str());
     println!("{}", form.data.password.text().as_str());
     println!("{}", form.data.cpassword.text().as_str());
-    println!("{}", device_menu.selected());
+    println!("{}", device_data.blockdevices[
+        device_menu.selected() as usize
+    ].name);
+    // // // // // // // // // // // // // 
+
+
+    let name: String = form.data.username.text();  
+    let password: String = form.data.password.text();
+    let cpassword: String = form.data.cpassword.text();
+    let hostname: String = form.data.hostname.text();
+
+    let device: sysinfo::Device =
+     device_data.blockdevices[device_menu.selected() as usize].clone();
+
+
+    let user = User {
+      name, password, cpassword
+    };
+
+    let userData = UserData {
+      user, hostname, 
+      device: &device
+    };
+
+    validation::validate_config(&userData);
   });
 
 
-    
+  // Add to main continer 
   main_box.append(&device_box);
   main_box.append(&form.widget);
   main_box.append(&button);
