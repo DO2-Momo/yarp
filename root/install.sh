@@ -16,4 +16,13 @@ grub-mkconfig -o /boot/grub/grub.cfg
 systemctl enable NetworkManager.service
 systemctl enable lightdm.service
 
+git clone https://aur.archlinux.org/yay.git
+cd yay;
+
+makepkg -si
+
+cd ..
+
+yay -S dracula-gtk-theme
+
 rm -f /install.sh

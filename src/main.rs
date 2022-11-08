@@ -131,7 +131,6 @@ fn build_ui(app: &Application) {
 
   });
 
-
   // Add to main continer 
   main_box.append(&device_box);
   main_box.append(&form.widget);

@@ -20,8 +20,8 @@ xfdesktop
 thunar
 gedit
 lightdm
+gnome-terminal
 xfce4-panel
-xfce4-terminal
 xfce4-screensaver
 xfce4-netload-plugin
 xfce4-dict

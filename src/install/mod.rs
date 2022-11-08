@@ -191,7 +191,6 @@ pub fn genfstab() {
       .arg("-U")    
       .arg("-p")
       .arg("/mnt")  
-      .stdout(Stdio::piped())
       .output()
       .expect("failed to generate fstab file");
 
@@ -202,7 +201,7 @@ pub fn genfstab() {
 
 pub fn getPackages() -> std::io::Result<String> {
   // Mount home directory
-  let mut file = fs::File::open("./packages/packages.x86_64")?;
+  let mut file = fs::File::open("./packages/base.x86_64")?;
   let mut content = String::new();
   file.read_to_string(&mut content)?;
 
@@ -220,8 +219,11 @@ pub fn pacstrap(packages: String) {
   let install_packages = Command::new("pacstrap")
       .arg("/mnt")  
       .args(packages)  
-      .spawn()
-      .expect("failed to generate fstab file").wait();
+      .stdout(Stdio::pipe())
+      .output()
+      .expect("failed to generate fstab file");
+
+  println!("{}", install_packages.stdout);
 }
 
 pub fn grub_install(is_removable: bool) -> String {
@@ -230,7 +232,9 @@ pub fn grub_install(is_removable: bool) -> String {
   if is_removable { optional.push("--removable") };
 
   let mut grub_install_cmd = 
-      String::from("grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ARCH");
+      String::from(
+        "grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ARCH"
+      );
 
   for option in optional {
       grub_install_cmd.push(' ');
@@ -256,7 +260,6 @@ pub fn chroot(
   let mut chmod = Command::new("chmod")
       .arg("+x")
       .arg("/mnt/install")
-
       .spawn()
       .expect("failed");
 
@@ -264,7 +267,6 @@ pub fn chroot(
 
   Command::new("arch-chroot")
     .args(vec!["/mnt", "/install"])
-    //.arg("\"mount /dev/sda1 /boot/efi; /install\"")
     .arg(&data.user.name).arg(&data.user.password)
     .spawn();
 

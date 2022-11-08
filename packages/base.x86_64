@@ -1,10 +1,11 @@
+linux
 linux-lts
 linux-firmware
 base
 base-devel
 grub
 efibootmgr
-linux-headers
+linux-lts-headers
 sof-firmware
 dhcpcd
 net-tools
@@ -13,3 +14,4 @@ git
 nano
 neofetch
 htop
+util-linux
