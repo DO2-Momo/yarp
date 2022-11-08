@@ -2,14 +2,14 @@ xorg-xinit
 xorg-server
 xfwm4
 xfdesktop
-thunar
+nemo
 gedit
 lightdm
 adapta-gtk-theme
 nm-connection-editor
 gnome-terminal
 xfce4-settings
-xfc4-whiskermenu-plugin
+xfce4-whiskermenu-plugin
 xfce4-panel
 xfce4-screensaver
 xfce4-netload-plugin
