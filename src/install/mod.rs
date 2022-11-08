@@ -329,7 +329,6 @@ pub fn getPackages() -> std::io::Result<Vec<String>> {
 
 pub fn pacstrap(packages: Vec<&str>) {
 
-
   for i in 0..packages.len() {
     println!("PACKAGE: {}", packages[i])
   }
@@ -337,8 +336,7 @@ pub fn pacstrap(packages: Vec<&str>) {
   Command::new("lsblk")
     .spawn();
 
-
-    println!(" --- PACKSTRAP ---");
+  println!(" --- PACKSTRAP ---");
 
   let install_packages = Command::new("pacstrap")
       .arg("/mnt")
