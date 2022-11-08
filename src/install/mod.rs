@@ -1,5 +1,6 @@
 use crate::config::{UserData, PartData};
 use crate::sysinfo::Device;
+use std::{thread, time::Duration};
 
 use beach;
 use std::process::{Stdio,Command};
@@ -72,7 +73,8 @@ pub fn sum(arr: &Vec<u64>) -> u64 {
 pub fn calculate_partitions(
   device: &Device,
   root: f32,
-  home: f32
+  home: f32,
+  has_home:bool
 ) -> Vec<u64> {
   let mut sizes = Vec::<u64>::new();
   let size: u64 = toMB(device.size);
@@ -80,6 +82,11 @@ pub fn calculate_partitions(
   sizes.push(0);
   sizes.push(300);
   sizes.push(2048 + sizes[sizes.len()-1]);
+  if !has_home {
+    sizes.push(size-2350);
+    return sizes;
+  }
+  
   sizes.push((root * (size - 2350) as f32) as u64 + sizes[sizes.len()-1]);
   sizes.push((home * (size - 2350) as f32) as u64 + sizes[sizes.len()-1]);
 
@@ -132,6 +139,11 @@ pub fn make_filesystem(part_info: Vec<PartData>, device_name: &str) {
 }
 
 pub fn wipe_fs(devname: &str) {
+  let umount = Command::new("umount")
+    .arg("-Rf").arg("/mnt")
+    .spawn();
+
+  umount.expect("FAILED").wait();
   // Launch
   let wipefs = Command::new("wipefs")
     .args(vec!["-a", devname])  
@@ -141,7 +153,8 @@ pub fn wipe_fs(devname: &str) {
   wipefs.expect("FAILED").wait();
 }
 
-pub fn mount_part(devname: &str) {
+pub fn mount_part(devname: &str, has_home:bool) {
+
   let mount_root = Command::new("mount")
     .arg(slashdev!(devname, 3))
     .arg("/mnt")
@@ -149,39 +162,29 @@ pub fn mount_part(devname: &str) {
 
   mount_root.expect("FAILED").wait();
 
-  let mkdir_home = Command::new("mkdir")
-  .arg("-p")
-  .arg("/mnt/home")
-  .spawn();
-
-  mkdir_home.expect("FAILED").wait();
-
-  let mkdir_boot = Command::new("mkdir")
-  .arg("-p")
-  .arg("/mnt/boot/efi")
-  .spawn();
-
-  mkdir_boot.expect("FAILED").wait();
-
-  let mount_boot = Command::new("mount")
-  .arg(slashdev!(devname, 1))
-  .arg("/mnt/boot/efi")
-  .spawn();
-
-  mount_boot.expect("FAILED").wait();
-
-  let mount_home = Command::new("mount")
-  .arg(slashdev!(devname, 4))
-  .arg("/mnt/home")
-  .spawn();
-
-  mount_home.expect("FAILED").wait();
-
   // let swapon = Command::new("swapon")
   // .arg(slashdev!(devname, 2))
   // .spawn();
 
   // swapon.expect("FAILED").wait();
+
+  let mount_boot = Command::new("mount")
+  .arg("--mkdir").arg(slashdev!(devname, 1))
+  .arg("/mnt/boot/efi")
+  .spawn();
+
+  mount_boot.expect("FAILED").wait();
+
+  if has_home  {
+
+    let mount_home = Command::new("mount")
+    .arg("--mkdir").arg(slashdev!(devname, 4))
+    .arg("/mnt/home")
+    .spawn();
+
+    mount_home.expect("FAILED").wait();
+  }
+
 }
 
 
@@ -198,32 +201,79 @@ pub fn genfstab() {
   std::fs::write("/mnt/etc/fstab", &output).expect("Failed to write file");
 } 
 
+pub fn move_script() -> std::io::Result<()> {
+  let mut cp = Command::new("cp")
+  .args(vec![
+    "./root/install.sh",
+    "/mnt/install"
+  ])
+  .spawn();
 
-pub fn getPackages() -> std::io::Result<String> {
+  let out = cp.expect("failed").wait();
+
+  let mut chmod = Command::new("chmod")
+      .arg("+x")
+      .arg("/mnt/install")
+      .spawn();
+
+  chmod.expect("failed").wait();
+
+
+  Ok(())
+}
+
+pub fn filterPackages(mut packages: Vec<String>) -> Vec<String>{
+  for i in 0..packages.len() {
+    if (packages[i].len() == 0) {
+      packages.remove(i);
+    }
+  }
+
+  return packages;
+}
+
+pub fn getPackages() -> std::io::Result<Vec<String>> {
+
+
+  let mut ans: Vec<String> = Vec::<String>::new();
   // Mount home directory
-  let mut file = fs::File::open("./packages/base.x86_64")?;
+  let mut file = fs::File::open("./packages/packages.x86_64")?;
   let mut content = String::new();
   file.read_to_string(&mut content)?;
 
-  Ok(content)
+  let mut split = content.split("\n");
+  ans = split.collect::<Vec<&str>>().iter().map(|s| s.to_string()).collect();
+  
+  Ok(filterPackages(ans))
 }
 
-pub fn pacstrap(packages: String) {
-  let mut split = packages.split("\n");
-  let packages: Vec<&str> = split.collect();
+
+
+pub fn pacstrap(packages: Vec<&str>) {
+
 
   for i in 0..packages.len() {
-    println!("{}",packages[i]);
+    println!("PACKAGE: {}", packages[i])
   }
 
-  let install_packages = Command::new("pacstrap")
-      .arg("/mnt")  
-      .args(packages)  
-      .stdout(Stdio::pipe())
-      .output()
-      .expect("failed to generate fstab file");
+  Command::new("lsblk")
+    .spawn();
 
-  println!("{}", install_packages.stdout);
+
+    println!(" --- PACKSTRAP ---");
+
+  let install_packages = Command::new("pacstrap")
+      .arg("/mnt")
+      .args(packages)
+      .stdout(Stdio::inherit())
+      .spawn();
+
+
+
+  install_packages
+  .expect("failed").wait();
+
+  println!(" --- END ---");
 }
 
 pub fn grub_install(is_removable: bool) -> String {
@@ -248,22 +298,10 @@ pub fn chroot(
   data: &UserData,
   is_removable: bool
 ) {
-  let mut cp = Command::new("cp")
-  .args(vec![
-    "./root/install.sh",
-    "/mnt/install"
-  ])
-  .spawn();
 
-  let out = cp.expect("failed").wait();
+  Command::new("lsblk")
+    .spawn();
 
-  let mut chmod = Command::new("chmod")
-      .arg("+x")
-      .arg("/mnt/install")
-      .spawn()
-      .expect("failed");
-
-  chmod.wait();
 
   Command::new("arch-chroot")
     .args(vec!["/mnt", "/install"])
@@ -276,19 +314,26 @@ pub fn chroot(
 
 pub fn install(data: &UserData) {
 
-  let partitions_mb: Vec<u64> = calculate_partitions(data.device, 0.7, 0.3);
+  let partitions_mb: Vec<u64> = calculate_partitions(data.device, 0.7, 0.3, false);
   let part_info:Vec<PartData> = getPartFsInfo(); 
   let devname:&str = &slashdev!(&data.device.name); // Ex: /dev/sdX
 
   // --- DEVICE MANIPULATION ---
-  wipe_fs(devname);
-  make_partitions(partitions_mb, devname);
-  make_filesystem(part_info, &data.device.name);
-  mount_part(&data.device.name);
+  // wipe_fs(devname);
+  // make_partitions(partitions_mb, devname);
+  // make_filesystem(part_info, &data.device.name);
+  // mount_part(&data.device.name, false);
+
+  move_script();
   // // // // // // // // // // // 
 
-  let packages:String = getPackages().unwrap();
-  pacstrap(packages);
-  genfstab();
-  chroot(&data, true);
+
+  let packages:Vec<String> = getPackages().unwrap();
+  let pack:Vec<&str> = 
+  packages.iter().map(|s| s as &str).collect();
+
+  
+  //pacstrap(pack);
+   genfstab();
+   chroot(&data, true);
 }

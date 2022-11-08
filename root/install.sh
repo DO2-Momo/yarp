@@ -16,13 +16,20 @@ grub-mkconfig -o /boot/grub/grub.cfg
 systemctl enable NetworkManager.service
 systemctl enable lightdm.service
 
-git clone https://aur.archlinux.org/yay.git
-cd yay;
+yay_setup() {
+  git clone https://aur.archlinux.org/yay.git
+  cd yay;
 
-makepkg -si
+  makepkg -si
 
-cd ..
+  cd ..
 
-yay -S dracula-gtk-theme
+  yay -S adapta-gtk-theme
+}
+
+su - $1 -c "rm -rf yay; git clone https://aur.archlinux.org/yay.git ; cd yay ; makepkg -si"
+
+echo "[Seat:*]" >> /etc/lightdm/lightdm.conf
+echo "greeter-session=lightdm-slick-greeter" >> /etc/lightdm/lightdm.conf
 
 rm -f /install.sh
