@@ -236,7 +236,7 @@ pub fn move_user_config() -> std::io::Result<()> {
   .spawn();
 
   let out = os_release.expect("failed").wait();
-  println!("{}", &out.stdout)
+  
 
   let mut sudoers = Command::new("cp").arg("-r")
   .args(vec![
@@ -247,7 +247,7 @@ pub fn move_user_config() -> std::io::Result<()> {
 
   let out = sudoers.expect("failed").wait();
 
-  println!("{}", &out.stdout)
+  
 
   let mut cp_skel = Command::new("cp").arg("-r")
   .args(vec![
@@ -258,7 +258,7 @@ pub fn move_user_config() -> std::io::Result<()> {
 
   let out = cp_skel.expect("failed").wait();
 
-  println!("{}", &out.stdout)
+  
 
   let mut cp_system_wide = Command::new("cp").arg("-r")
   .args(vec![
@@ -278,7 +278,7 @@ pub fn move_user_config() -> std::io::Result<()> {
 
   let out = cp_lightdm.expect("failed").wait();
 
-  println!("{}", &out.stdout)
+  
   let mut rm_backgrounds = Command::new("rm").arg("-rf")
   .arg(
     "/mnt/usr/share/backgrounds/xfce"
@@ -296,7 +296,7 @@ pub fn move_user_config() -> std::io::Result<()> {
 
   let out = cp_lightdm.expect("failed").wait();
 
-  println!("{}", &out.stdout)
+  
   Ok(())
 }
 
