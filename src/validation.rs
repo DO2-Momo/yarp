@@ -2,8 +2,9 @@
 
 use crate::config::UserData;
 use crate::install::install;
+use gtk::TextBuffer;
 
-pub fn validate_config(data: &UserData) {
+pub fn validate_config<'a>(data: &UserData, mut log: &'a TextBuffer) {
     
     if data.user.password != data.user.cpassword {
         println!("Passwords do not match");  
@@ -17,7 +18,7 @@ pub fn validate_config(data: &UserData) {
 
 
 
-    install(data);
+    install(data, log);
 
     return;
 }

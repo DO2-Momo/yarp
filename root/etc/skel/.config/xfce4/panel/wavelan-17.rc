@@ -1,0 +1,8 @@
+Interface=wlp0s20u3
+Autohide=false
+AutohideMissing=false
+SignalColors=true
+ShowIcon=true
+ShowBar=false
+Command=nm-connection-editor
+

@@ -1,9 +1,11 @@
 use crate::config::{UserData, PartData};
 use crate::sysinfo::Device;
 use std::{thread, time::Duration};
-
+use gtk::TextBuffer;
 use beach;
 use std::process::{Stdio,Command};
+use ctrlc;
+
 use std::str;
 use std::fs;
 
@@ -146,11 +148,13 @@ pub fn wipe_fs(devname: &str) {
   umount.expect("FAILED").wait();
   // Launch
   let wipefs = Command::new("wipefs")
-    .args(vec!["-a", devname])  
+    .args(vec!["-af", devname])  
     .spawn();
 
   // Wait
   wipefs.expect("FAILED").wait();
+
+  println!("--- CLEARED DRIVE, FORMATING PARTITIONGS... ---")
 }
 
 pub fn mount_part(devname: &str, has_home:bool) {
@@ -162,11 +166,11 @@ pub fn mount_part(devname: &str, has_home:bool) {
 
   mount_root.expect("FAILED").wait();
 
-  // let swapon = Command::new("swapon")
-  // .arg(slashdev!(devname, 2))
-  // .spawn();
+  let swapon = Command::new("swapon")
+  .arg(slashdev!(devname, 2))
+  .spawn();
 
-  // swapon.expect("FAILED").wait();
+  swapon.expect("FAILED").wait();
 
   let mount_boot = Command::new("mount")
   .arg("--mkdir").arg(slashdev!(devname, 1))
@@ -218,6 +222,65 @@ pub fn move_script() -> std::io::Result<()> {
 
   chmod.expect("failed").wait();
 
+
+  Ok(())
+}
+
+pub fn move_user_config() -> std::io::Result<()> {
+
+  let mut os_release = Command::new("cp").arg("-r")
+  .args(vec![
+    "./root/etc/os-release",
+    "/mnt/etc/os-release"
+  ])
+  .spawn();
+
+  let out = cp_skel.expect("failed").wait();
+
+  let mut cp_skel = Command::new("cp").arg("-r")
+  .args(vec![
+    "./root/etc/skel",
+    "/mnt/etc/"
+  ])
+  .spawn();
+
+  let out = cp_skel.expect("failed").wait();
+
+
+  let mut cp_system_wide = Command::new("cp").arg("-r")
+  .args(vec![
+    "./root/etc/skel/.config",
+    "/mnt/etc/*"
+  ])
+  .spawn();
+
+  let out = cp_system_wide.expect("failed").wait();
+
+  let mut cp_lightdm = Command::new("cp").arg("-r")
+  .args(vec![
+    "./root/etc/lightdm",
+    "/mnt/etc/"
+  ])
+  .spawn();
+
+  let out = cp_lightdm.expect("failed").wait();
+
+  let mut rm_backgrounds = Command::new("rm").arg("-rf")
+  .arg(
+    "/mnt/usr/share/backgrounds/xfce"
+  )
+  .spawn();
+
+  let out = rm_backgrounds.expect("failed").wait();
+
+  let mut cp_lightdm = Command::new("cp").arg("-r")
+  .args(vec![
+    "./root/usr/share/backgrounds/xfce",
+    "/mnt/usr/share/backgrounds/"
+  ])
+  .spawn();
+
+  let out = cp_lightdm.expect("failed").wait();
 
   Ok(())
 }
@@ -299,41 +362,64 @@ pub fn chroot(
   is_removable: bool
 ) {
 
-  Command::new("lsblk")
-    .spawn();
+  // Disable quitting
+  ctrlc::set_handler(move || {
+      println!("Can't abort install");
+  })
+  .expect("failed to set ctrlc handler");
 
-
-  Command::new("arch-chroot")
+  let chroot = Command::new("arch-chroot")
     .args(vec!["/mnt", "/install"])
-    .arg(&data.user.name).arg(&data.user.password)
+    .arg(&data.user.name).arg(&data.user.password).arg(&data.hostname)
     .spawn();
 
+  chroot.expect("failed").wait();
   
   return;
 }
 
-pub fn install(data: &UserData) {
+pub fn install<'a>(data: &UserData, mut log: &'a TextBuffer) {
 
   let partitions_mb: Vec<u64> = calculate_partitions(data.device, 0.7, 0.3, false);
   let part_info:Vec<PartData> = getPartFsInfo(); 
   let devname:&str = &slashdev!(&data.device.name); // Ex: /dev/sdX
 
   // --- DEVICE MANIPULATION ---
-  // wipe_fs(devname);
-  // make_partitions(partitions_mb, devname);
-  // make_filesystem(part_info, &data.device.name);
-  // mount_part(&data.device.name, false);
+  wipe_fs(devname);
+  make_partitions(partitions_mb, devname);
+  make_filesystem(part_info, &data.device.name);
+  mount_part(&data.device.name, false);
 
   move_script();
   // // // // // // // // // // // 
 
-
   let packages:Vec<String> = getPackages().unwrap();
   let pack:Vec<&str> = 
   packages.iter().map(|s| s as &str).collect();
-
   
-  //pacstrap(pack);
-   genfstab();
-   chroot(&data, true);
+  pacstrap(pack);
+  genfstab();
+
+  move_user_config();
+  chroot(&data, true);
+
+
+  let mut cp_skel = Command::new("cp").arg("-r")
+  .args(vec![
+    "./root/etc/skel/",
+    "/mnt/etc/*"
+  ])
+  .spawn();
+  cp_skel.expect("failed").wait();
+
+
+
+  let umount = Command::new("umount")
+    .arg("-R").arg("/mnt")
+    .spawn();
+
+  umount.expect("FAILED").wait();
+
+
+  println!("--- THE DEVICE SUCCESSFULLY INSTALLED ---");
 }

@@ -22,7 +22,9 @@ use gtk::{
   Label,
   Text,
   StyleContext,
-  CssProvider
+  CssProvider,
+  TextBuffer,
+  TextView
 };
 
 const APP_ID: &str = "org.gtk_rs.yarp";
@@ -55,7 +57,7 @@ fn main() {
 
 fn build_ui(app: &Application) {
 
-
+  
   // Get devices data
   let device_data: sysinfo::Devices = sysinfo::get_devices();
 
@@ -68,6 +70,17 @@ fn build_ui(app: &Application) {
     .orientation(Orientation::Vertical)
     .css_classes(vec![String::from("box")])
     .build();
+
+  let mut log: TextBuffer = TextBuffer::builder()
+    .text("...")
+    .build(); 
+
+  // let log_emulator: TextView = TextView::builder()
+  //   .buffer()
+  //   .monospace(true)
+  //   .margin_top(12)
+  //   .margin_bottom(12)
+  //   .build();
 
 
   // Create a window
@@ -126,8 +139,10 @@ fn build_ui(app: &Application) {
       device: &device
     };
 
+
+
     // Validate configuration & Start installation if is valid
-    validation::validate_config(&userData);
+    validation::validate_config(&userData, &log);
 
   });
 
@@ -135,6 +150,7 @@ fn build_ui(app: &Application) {
   main_box.append(&device_box);
   main_box.append(&form.widget);
   main_box.append(&button);
+  // main_box.append(&log_emulator);
 
   // Present window
   window.present();
