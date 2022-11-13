@@ -1,8 +1,8 @@
-Interface=wlp0s20u3
+Interface=eno1
 Autohide=false
 AutohideMissing=false
 SignalColors=true
 ShowIcon=true
 ShowBar=false
-Command=nm-connection-editor
+Command=nm-applet
 

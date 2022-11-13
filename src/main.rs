@@ -4,28 +4,37 @@ mod validation;
 mod install;
 mod config;
 
-use config::{User, UserData};
+use crate::config::{User, UserData};
+use crate::sysinfo::Devices;
 use crate::components::prompt_user;
-
-use std::rc::Rc;
-use std::cell::RefCell;
+use crate::components::control::{PackageProfile};
 use std::{str};
 use gtk::gdk::Display;
 use gtk::prelude::*;
+use gtk::gio::SimpleAction;
+use gtk::glib;
+use glib_macros::clone;
 use gtk::{
   DropDown,
   Button,
-  Application,
-  ApplicationWindow,
   Box, 
   Orientation,
+  Application,
+  ApplicationWindow,
   Label,
-  Text,
+  CheckButton,
   StyleContext,
+  TextView,
+  EntryBuffer,
   CssProvider,
+  Align,
   TextBuffer,
-  TextView
+  PositionType,
+  Scale
 };
+use std::rc::Rc;
+
+use std::cell::Cell;
 
 const APP_ID: &str = "org.gtk_rs.yarp";
 
@@ -54,43 +63,7 @@ fn main() {
   app.run();
 }
 
-
-fn build_ui(app: &Application) {
-
-  
-  // Get devices data
-  let device_data: sysinfo::Devices = sysinfo::get_devices();
-
-  // Create a button with label and margins
-  let button = Button::builder()
-    .label("Confirm")
-    .build();
-
-  let main_box = Box::builder()
-    .orientation(Orientation::Vertical)
-    .css_classes(vec![String::from("box")])
-    .build();
-
-  let mut log: TextBuffer = TextBuffer::builder()
-    .text("...")
-    .build(); 
-
-  // let log_emulator: TextView = TextView::builder()
-  //   .buffer()
-  //   .monospace(true)
-  //   .margin_top(12)
-  //   .margin_bottom(12)
-  //   .build();
-
-
-  // Create a window
-  let window = ApplicationWindow::builder()
-    .application(app)
-    .default_width(800).default_height(600)
-    .title("SYSTEM: yarp installer")
-    .child(&main_box)
-    .build();
-
+fn get_device_labels(device_data: &Devices) -> Vec<String> {
   let mut device_names: Vec<String> = Vec::<String>::new();
   // Format to "name  size"
   for i in 0..device_data.blockdevices.len() {
@@ -102,21 +75,191 @@ fn build_ui(app: &Application) {
       &size_gb.to_string()
     ));
   }
-  // // to &str vector
-  let device_labels: Vec<&str> = device_names.iter().map(|s| s as &str).collect();
-  // Create dropdown menu
-  let device_menu = DropDown::from_strings(&device_labels);
 
-  let device_box = Box::builder()
-      .css_classes(vec![String::from("dropdown")])
-      .build();
+  return device_names;
+}
 
-  device_box.append(&device_menu);
+fn get_device_sizes(devices: &sysinfo::Devices) -> Vec<u128> {
+  let mut ans = Vec::<u128>::new();
+
+  for i in 0..devices.blockdevices.len() {
+    ans.push(devices.blockdevices[i].size + 0);
+  }
+
+  return ans;
+}
+
+fn build_ui(app: &Application) {
+  // Get devices data
+  let device_data: sysinfo::Devices = sysinfo::get_devices();
+  let device_data_sizes: Vec<u128> = get_device_sizes(&device_data);
+  // Create a button with label and margins
+  let confirm_button = Button::builder()
+    .label("Confirm")
+    .build();
+
+  let main_box = Box::builder()
+    .orientation(Orientation::Vertical)
+    .hexpand(true)
+    .vexpand(true)
+    .css_classes(vec![String::from("main"),String::from("box")])
+    .build();
 
   let form = components::form();
 
-  // Connect to "clicked" signal of `button`
-  button.connect_clicked(move |button| {
+  let flex = Box::builder()
+    .orientation(Orientation::Horizontal)
+    .hexpand(true)
+    .vexpand(true)
+    .css_classes(vec![String::from("flex-div")])
+    .build();
+  
+  let right_box = Box::builder()
+    .orientation(Orientation::Vertical)
+    .hexpand(true)
+    .vexpand(true)
+    .css_classes(vec![String::from("right-box")])
+    .width_request(400)
+    .build();
+
+  let package_label = Label::with_mnemonic("Packages:");
+
+  let package_profile_box = Box::builder()
+    .orientation(Orientation::Vertical)
+    .halign(Align::Start)
+    .valign(Align::Start)
+    .css_classes(vec![String::from("package-box")])
+    .build();
+
+  // Create a window
+  let window = ApplicationWindow::builder()
+    .application(app)
+    .default_width(800).default_height(600)
+    .title("SYSTEM: yarp installer")
+    .child(&main_box)
+    .build();
+
+  // Get device labels
+  let device_labels_dyn: Vec<String> = get_device_labels(&device_data);
+  let device_labels: Vec<&str> = device_labels_dyn.iter().map(|s| s as &str).collect();
+
+  let chk_desktop:CheckButton    = CheckButton::with_label("Desktop Environement");
+  let chk_utils:CheckButton      = CheckButton::with_label("Desktop Features");
+  let chk_multimedia:CheckButton = CheckButton::with_label("Multimedia Utils");
+  let chk_nightly:CheckButton    = CheckButton::with_label("Nightly pack");
+
+  package_profile_box.append(&package_label);
+  package_profile_box.append(&chk_desktop);
+  package_profile_box.append(&chk_utils);
+  package_profile_box.append(&chk_multimedia);
+  package_profile_box.append(&chk_nightly);
+
+  let scale_part_ratio = Scale::builder()
+    .orientation(Orientation::Horizontal)
+    .width_request(250)
+    .value_pos(PositionType::Left)
+    .has_origin(true)
+    .can_target(true)
+    .fill_level(100.0)
+    .vexpand(false)
+    .build();
+
+  scale_part_ratio.set_value(50.0);
+  scale_part_ratio.set_increments(0.1, 1.0);
+  scale_part_ratio.set_range(0.0, 100.0);
+  scale_part_ratio.add_mark(50.0, PositionType::Bottom, Some("50%"));
+  scale_part_ratio.set_draw_value(true);
+
+  let slider_wrap = Box::builder()
+    .css_classes(vec![String::from("slider-wrap")])
+    .hexpand(true).vexpand(true)
+    .build();
+    
+  slider_wrap.append(&scale_part_ratio);
+
+  let partition_box = Box::builder()
+    .orientation(Orientation::Vertical)
+    .hexpand(true)
+    .vexpand(true)
+    .css_classes(vec![String::from("partition-box")])
+    .build();
+
+  let partition_slider_box = Box::builder()
+    .orientation(Orientation::Horizontal)
+    .hexpand(true)
+    .vexpand(true)
+    .css_classes(vec![String::from("partition-box")])
+    .build();
+
+  let root_size_label = Label::with_mnemonic(&format!("{} Mb",(device_data_sizes[0]/1000000) as i32));
+  let home_size_label = Label::with_mnemonic("0 Mb");
+
+
+  partition_slider_box.append(&root_size_label);
+  partition_slider_box.append(&slider_wrap);
+  partition_slider_box.append(&home_size_label);
+
+  partition_box.append(&partition_slider_box);
+
+  right_box.append(&package_profile_box);
+  right_box.append(&partition_box);
+
+  // Create dropdown menu with the labels
+  let device_menu = DropDown::from_strings(&device_labels);
+
+  // device_menu.connect_selected_item_notify(move |device_menu| {
+  //   // Activate "win.count" and pass "1" as parameter
+  //   let param = (device_data_sizes[device_menu.selected() as usize]/1000000) as i32;
+  //   device_menu
+  //     .activate_action("win.set_root_size", Some(&param.to_variant()))
+  //     .expect("The action does not exist.");
+  // });
+
+
+
+  let device_box = Box::builder()
+    .css_classes(vec![String::from("dropdown")])
+    .build();
+
+  device_box.append(&device_menu);
+
+  let original_state:i32 = 0;
+  let set_root_size = SimpleAction::new_stateful(
+    "set_root_size",
+    Some(&i32::static_variant_type()),
+    &original_state.to_variant(),
+  );
+
+  // scale_part_ratio.connect_value_changed( move |scale_part_ratio| {
+  //   // Activate "win.count" and pass "1" as parameter
+  //   let param = scale_part_ratio.value() as i32 * device_data_sizes[device_menu.selected() as usize] as i32;
+  //   scale_part_ratio
+  //     .activate_action("win.set_root_size", Some(&param.to_variant()))
+  //     .expect("The action does not exist.");
+  // });
+
+
+
+  set_root_size.connect_activate(clone!(@weak root_size_label => move |action, param| {
+    let mut state = action
+      .state()
+      .expect("Could not get state.")
+      .get::<i32>()
+      .expect("The variant needs to be of type `i32`.");
+
+    // Get parameter
+    let param = param
+      .expect("Could not get parameter.")
+      .get::<i32>()
+      .expect("The variant needs to be of type `i32`.");
+
+    state = param;
+
+    root_size_label.set_label(&format!("{state} Mb"));
+  }));
+
+  // Connect to "clicked" signal of `confirm_button`
+  confirm_button.connect_clicked(move |confirm_button| {
 
     prompt_user(&form.data);
 
@@ -126,32 +269,41 @@ fn build_ui(app: &Application) {
     let cpassword: String = form.data.cpassword.text();
     let hostname: String = form.data.hostname.text();
 
-    let device: sysinfo::Device =
-     device_data.blockdevices[device_menu.selected() as usize].clone();
+    let device: &sysinfo::Device =
+    device_data.get(device_menu.selected() as usize);
 
+    let user = User { name, password, cpassword };
 
-    let user = User {
-      name, password, cpassword
+    let packages: PackageProfile = PackageProfile {
+      desktop:    chk_desktop.is_active(),
+      utils:      chk_utils.is_active(),
+      multimedia: chk_multimedia.is_active(),
+      nightly:    chk_nightly.is_active()
     };
 
     let userData = UserData {
       user, hostname, 
-      device: &device
+      device: device,
+      packages: packages
     };
 
-
-
     // Validate configuration & Start installation if is valid
-    validation::validate_config(&userData, &log);
-
+    validation::validate_config(&userData);
   });
 
   // Add to main continer 
   main_box.append(&device_box);
-  main_box.append(&form.widget);
-  main_box.append(&button);
-  // main_box.append(&log_emulator);
+  flex.append(&form.widget);
+  flex.append(&right_box);
+  main_box.append(&flex);
+  main_box.append(&confirm_button);
+
+  window.add_action(&set_root_size);
 
   // Present window
   window.present();
+
+  return;
+
 }
+

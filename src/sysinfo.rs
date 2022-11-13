@@ -23,9 +23,24 @@ pub struct Device {
   pub children: Option<Vec<Partition>>
 }
 
+impl Device {
+  pub fn get_size(&self) -> u128 {
+    return self.size;
+  }
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct Devices {
   pub blockdevices: Vec<Device>
+}
+
+impl Devices {
+  pub fn get_size(&self, key: usize) -> u128 {
+    return self.blockdevices[key].size;
+  }
+  pub fn get(&self, key: usize) -> &Device {
+    return &self.blockdevices[key];
+  }
 }
 
 pub fn get_devices() -> Devices {

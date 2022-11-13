@@ -7,28 +7,37 @@
     <property name="dark-mode" type="bool" value="true"/>
     <property name="panel-2" type="empty">
       <property name="autohide-behavior" type="uint" value="0"/>
-      <property name="position" type="string" value="p=10;x=0;y=0"/>
+      <property name="position" type="string" value="p=8;x=960;y=1063"/>
       <property name="length" type="uint" value="100"/>
       <property name="position-locked" type="bool" value="true"/>
       <property name="size" type="uint" value="31"/>
       <property name="plugin-ids" type="array">
+        <value type="int" value="2"/>
         <value type="int" value="7"/>
         <value type="int" value="1"/>
+        <value type="int" value="6"/>
+        <value type="int" value="3"/>
+        <value type="int" value="10"/>
+        <value type="int" value="9"/>
         <value type="int" value="16"/>
         <value type="int" value="22"/>
         <value type="int" value="21"/>
         <value type="int" value="28"/>
         <value type="int" value="17"/>
         <value type="int" value="29"/>
+        <value type="int" value="4"/>
+        <value type="int" value="5"/>
         <value type="int" value="15"/>
         <value type="int" value="27"/>
         <value type="int" value="8"/>
         <value type="int" value="24"/>
         <value type="int" value="25"/>
+        <value type="int" value="11"/>
+        <value type="int" value="12"/>
         <value type="int" value="23"/>
         <value type="int" value="26"/>
       </property>
-      <property name="length-adjust" type="bool" value="true"/>
+      <property name="length-adjust" type="bool" value="false"/>
       <property name="background-style" type="uint" value="1"/>
       <property name="background-rgba" type="array">
         <value type="double" value="0.117333"/>
@@ -36,9 +45,12 @@
         <value type="double" value="0.183333"/>
         <value type="double" value="1.000000"/>
       </property>
-      <property name="disable-struts" type="bool" value="true"/>
+      <property name="disable-struts" type="bool" value="false"/>
       <property name="icon-size" type="uint" value="0"/>
       <property name="leave-opacity" type="uint" value="100"/>
+      <property name="span-monitors" type="bool" value="false"/>
+      <property name="mode" type="uint" value="0"/>
+      <property name="output-name" type="string" value="Automatic"/>
     </property>
   </property>
   <property name="plugins" type="empty">
@@ -49,11 +61,9 @@
       <property name="expand" type="bool" value="true"/>
       <property name="style" type="uint" value="0"/>
     </property>
-    <property name="plugin-7" type="string" value="applicationsmenu">
-      <property name="button-title" type="string" value=""/>
-      <property name="button-icon" type="string" value="application-x-sharedlib"/>
+    <property name="plugin-8" type="string" value="clock">
+      <property name="mode" type="uint" value="2"/>
     </property>
-    <property name="plugin-8" type="string" value="clock"/>
     <property name="plugin-15" type="string" value="notification-plugin"/>
     <property name="plugin-17" type="string" value="wavelan"/>
     <property name="plugin-22" type="string" value="tasklist">
@@ -72,7 +82,7 @@
         <value type="string" value="-separator"/>
         <value type="string" value="-shutdown"/>
         <value type="string" value="-restart"/>
-        <value type="string" value="-separator"/>
+        <value type="string" value="+separator"/>
         <value type="string" value="+logout"/>
         <value type="string" value="-logout-dialog"/>
       </property>
@@ -101,6 +111,38 @@
       <property name="items" type="array">
         <value type="string" value="16678609281.desktop"/>
       </property>
+    </property>
+    <property name="plugin-2" type="string" value="whiskermenu"/>
+    <property name="plugin-3" type="string" value="launcher">
+      <property name="items" type="array">
+        <value type="string" value="16681591061.desktop"/>
+      </property>
+    </property>
+    <property name="plugin-4" type="string" value="xkb">
+      <property name="display-type" type="uint" value="2"/>
+      <property name="display-name" type="uint" value="0"/>
+    </property>
+    <property name="plugin-5" type="string" value="separator">
+      <property name="style" type="uint" value="0"/>
+    </property>
+    <property name="plugin-6" type="string" value="launcher">
+      <property name="items" type="array">
+        <value type="string" value="16681645921.desktop"/>
+      </property>
+    </property>
+    <property name="plugin-7" type="string" value="separator">
+      <property name="expand" type="bool" value="false"/>
+      <property name="style" type="uint" value="0"/>
+    </property>
+    <property name="plugin-9" type="string" value="separator">
+      <property name="style" type="uint" value="2"/>
+    </property>
+    <property name="plugin-10" type="string" value="separator">
+      <property name="style" type="uint" value="0"/>
+    </property>
+    <property name="plugin-11" type="string" value="battery"/>
+    <property name="plugin-12" type="string" value="separator">
+      <property name="style" type="uint" value="0"/>
     </property>
   </property>
 </channel>

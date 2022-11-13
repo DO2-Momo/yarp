@@ -8,21 +8,42 @@ use gtk::{
   Justification,
   Align,
   EntryBuffer,
-  Button,
-  Application,
-  ApplicationWindow
+  Button
 };
 use gtk::prelude::*;
 
 pub mod control;
-use control::{Form, FormData};
+use control::{Form, FormData, PackageProfile};
 
+pub fn package_profile_menu(
+  chk_desktop: CheckButton,
+  chk_utils: CheckButton,
+  chk_multimedia: CheckButton,
+  chk_nightly: CheckButton
+) -> Box {
+
+
+
+  let package_profile_box = Box::builder()
+  .orientation(Orientation::Vertical)
+  .css_classes(vec![String::from("profile")])
+  .build();
+
+  package_profile_box.append(&chk_desktop);
+  package_profile_box.append(&chk_utils);
+  package_profile_box.append(&chk_multimedia);
+  package_profile_box.append(&chk_nightly);
+
+  return package_profile_box;
+}
 
 pub fn formField(label: &str, buf: &EntryBuffer, hidden: bool ) -> Box {
   let input = Text::builder()
       .css_classes(vec![String::from("form-input")])
       .buffer(buf)
-      .max_length(32)
+      .hexpand(true)
+      .width_request(30)
+      .max_length(18)
       .build();
 
 
@@ -41,7 +62,7 @@ pub fn formField(label: &str, buf: &EntryBuffer, hidden: bool ) -> Box {
 
   let field = Box::builder()
       .css_classes(vec![String::from("form-field")])
-      .homogeneous(true)
+
       .halign(Align::Start)
       .build();
 
@@ -62,9 +83,14 @@ pub fn form() -> Form {
     username: ubuf,
     hostname: hbuf,
     password: pbuf,
-    cpassword: cbuf
+    cpassword: cbuf,
+    packages: PackageProfile {
+      desktop:true,
+      utils: false,
+      multimedia: false,
+      nightly: false
+    }
   };
-
 
   let hostname = formField("username ", &formData.username, false);
   let username = formField("hostname ", &formData.hostname, false);
@@ -74,6 +100,8 @@ pub fn form() -> Form {
 
   let form: Box = Box::builder()
       .orientation(Orientation::Vertical)
+      .hexpand(false)
+      .vexpand(false)
       .css_classes(vec![String::from("form")])
       .build();
 
@@ -101,10 +129,7 @@ pub fn DeviceRow(name: &str, size: &str) -> Box {
       .css_classes(vec![String::from("device-check")])
       .build();
 
-  BoxExt::append(
-    &device_row,
-    &check 
-  );
+  device_row.append(&check);
 
   BoxExt::append(
     &device_row,

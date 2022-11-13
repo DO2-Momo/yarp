@@ -1,5 +1,5 @@
-NAME="QCMO Linux"
-PRETTY_NAME="QCMO Linux"
+NAME="Momo Linux"
+PRETTY_NAME="Momo Linux"
 ID=arch
 BUILD_ID=rolling
 ANSI_COLOR="38;2;23;147;209"

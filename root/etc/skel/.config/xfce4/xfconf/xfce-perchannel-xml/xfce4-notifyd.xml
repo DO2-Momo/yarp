@@ -4,6 +4,16 @@
   <property name="applications" type="empty">
     <property name="known_applications" type="array">
       <value type="string" value="org.Nemo"/>
+      <value type="string" value="org.xfce.xfdesktop"/>
+      <value type="string" value="Xfce4-notifyd settings"/>
     </property>
   </property>
+  <property name="primary-monitor" type="uint" value="0"/>
+  <property name="notify-location" type="uint" value="3"/>
+  <property name="log-level" type="uint" value="0"/>
+  <property name="log-level-apps" type="uint" value="0"/>
+  <property name="theme" type="string" value="Adapta"/>
+  <property name="expire-timeout" type="int" value="3"/>
+  <property name="do-fadeout" type="bool" value="true"/>
+  <property name="do-slideout" type="bool" value="false"/>
 </channel>

@@ -1,11 +1,8 @@
 use crate::config::{UserData, PartData};
-use crate::sysinfo::Device;
-use std::{thread, time::Duration};
-use gtk::TextBuffer;
-use beach;
+use crate::components::control::{PackageProfile};
 use std::process::{Stdio,Command};
+use crate::sysinfo::Device;
 use ctrlc;
-
 use std::str;
 use std::fs;
 
@@ -302,7 +299,7 @@ pub fn move_user_config() -> std::io::Result<()> {
 
 pub fn filterPackages(mut packages: Vec<String>) -> Vec<String>{
   for i in 0..packages.len() {
-    if (packages[i].len() == 0) {
+    if packages[i].len() == 0 {
       packages.remove(i);
     }
   }
@@ -310,17 +307,55 @@ pub fn filterPackages(mut packages: Vec<String>) -> Vec<String>{
   return packages;
 }
 
-pub fn getPackages() -> std::io::Result<Vec<String>> {
-
+pub fn get_packages(params: PackageProfile) -> std::io::Result<Vec<String>> {
 
   let mut ans: Vec<String> = Vec::<String>::new();
-  // Mount home directory
-  let mut file = fs::File::open("./packages/packages.x86_64")?;
   let mut content = String::new();
-  file.read_to_string(&mut content)?;
+  let mut tmp_content = String::new();
+
+  tmp_content = String::new();
+  let mut file = fs::File::open("./packages/base.x86_64")?;
+  file.read_to_string(&mut tmp_content)?;
+  content.push_str(&tmp_content);
+  content.push_str("\n");
+
+  if params.multimedia == true {
+    tmp_content = String::new();
+    file = fs::File::open("./packages/multimedia.x86_64")?;
+    file.read_to_string(&mut tmp_content)?;
+    content.push_str(&tmp_content);
+    content.push_str("\n");
+  }
+
+  if params.nightly == true {
+    tmp_content = String::new();
+    file = fs::File::open("./packages/nightly.x86_64")?;
+    file.read_to_string(&mut tmp_content)?;
+    content.push_str(&tmp_content);
+    content.push_str("\n");
+  }
+
+  if params.desktop == true {
+    tmp_content = String::new();
+    file = fs::File::open("./packages/desktop.x86_64")?;
+    file.read_to_string(&mut tmp_content)?;
+    content.push_str(&tmp_content);
+    content.push_str("\n");
+  }
+
+  if params.utils == true {
+    tmp_content = String::new();
+    file = fs::File::open("./packages/utils.x86_64")?;
+    file.read_to_string(&mut tmp_content)?;
+    content.push_str(&tmp_content);
+    content.push_str("\n");
+  }
 
   let mut split = content.split("\n");
-  ans = split.collect::<Vec<&str>>().iter().map(|s| s.to_string()).collect();
+  ans = split.collect::<Vec<&str>>()
+    .iter()
+    .map(|s| s.to_string())
+    .collect();
   
   Ok(filterPackages(ans))
 }
@@ -330,26 +365,22 @@ pub fn getPackages() -> std::io::Result<Vec<String>> {
 pub fn pacstrap(packages: Vec<&str>) {
 
   for i in 0..packages.len() {
-    println!("PACKAGE: {}", packages[i])
+    println!("PACKAGES: {}", packages[i])
   }
 
-  Command::new("lsblk")
-    .spawn();
-
-  println!(" --- PACKSTRAP ---");
+  println!(" --- PACSTRAP ---");
 
   let install_packages = Command::new("pacstrap")
-      .arg("/mnt")
-      .args(packages)
-      .stdout(Stdio::inherit())
-      .spawn();
+    .arg("/mnt")
+    .args(packages)
+    .stdout(Stdio::inherit())
+    .spawn();
 
+  install_packages.expect("failed").wait();
 
+  println!(" --- PACSTRAP END ---");
 
-  install_packages
-  .expect("failed").wait();
-
-  println!(" --- END ---");
+  return;
 }
 
 pub fn grub_install(is_removable: bool) -> String {
@@ -391,7 +422,7 @@ pub fn chroot(
   return;
 }
 
-pub fn install<'a>(data: &UserData, mut log: &'a TextBuffer) {
+pub fn install<'a>(data: &UserData) {
 
   let partitions_mb: Vec<u64> = calculate_partitions(data.device, 0.7, 0.3, false);
   let part_info:Vec<PartData> = getPartFsInfo(); 
@@ -406,18 +437,26 @@ pub fn install<'a>(data: &UserData, mut log: &'a TextBuffer) {
   move_script();
   // // // // // // // // // // // 
 
-  let packages:Vec<String> = getPackages().unwrap();
+  // Get all specified packages
+  let packages:Vec<String> = get_packages(data.packages).unwrap();
   let pack:Vec<&str> = 
   packages.iter().map(|s| s as &str).collect();
   
+  // Install all packages
   pacstrap(pack);
+  
+  // Generate fstab file 
   genfstab();
 
+  // Move user config
   move_user_config();
+  
+  // Run chroot script
   chroot(&data, true);
 
 
-  let mut cp_skel = Command::new("cp").arg("-r")
+  // Transfer /etc/skel
+  let cp_skel = Command::new("cp").arg("-r")
   .args(vec![
     "./root/etc/skel/",
     "/mnt/etc/*"
@@ -425,8 +464,7 @@ pub fn install<'a>(data: &UserData, mut log: &'a TextBuffer) {
   .spawn();
   cp_skel.expect("failed").wait();
 
-
-
+  // umount device
   let umount = Command::new("umount")
     .arg("-R").arg("/mnt")
     .spawn();
