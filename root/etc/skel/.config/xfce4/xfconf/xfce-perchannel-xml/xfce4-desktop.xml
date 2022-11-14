@@ -7,7 +7,7 @@
         <property name="workspace0" type="empty">
           <property name="color-style" type="int" value="0"/>
           <property name="image-style" type="int" value="5"/>
-          <property name="last-image" type="string" value="/usr/share/backgrounds/xfce/default_2.png"/>
+          <property name="last-image" type="string" value="/usr/share/backgrounds/xfce/default_4.png"/>
         </property>
         <property name="workspace1" type="empty">
           <property name="color-style" type="int" value="0"/>
@@ -97,5 +97,9 @@
   <property name="last" type="empty">
     <property name="window-width" type="int" value="657"/>
     <property name="window-height" type="int" value="553"/>
+  </property>
+  <property name="desktop-icons" type="empty">
+    <property name="style" type="int" value="2"/>
+    <property name="icon-size" type="uint" value="40"/>
   </property>
 </channel>

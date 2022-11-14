@@ -1,8 +1,0 @@
-Interface=eno1
-Autohide=false
-AutohideMissing=false
-SignalColors=true
-ShowIcon=true
-ShowBar=false
-Command=nm-applet
-

@@ -7,10 +7,10 @@
     <property name="dark-mode" type="bool" value="true"/>
     <property name="panel-2" type="empty">
       <property name="autohide-behavior" type="uint" value="0"/>
-      <property name="position" type="string" value="p=8;x=960;y=1063"/>
+      <property name="position" type="string" value="p=0;x=960;y=1063"/>
       <property name="length" type="uint" value="100"/>
       <property name="position-locked" type="bool" value="true"/>
-      <property name="size" type="uint" value="31"/>
+      <property name="size" type="uint" value="32"/>
       <property name="plugin-ids" type="array">
         <value type="int" value="2"/>
         <value type="int" value="7"/>
@@ -23,7 +23,7 @@
         <value type="int" value="22"/>
         <value type="int" value="21"/>
         <value type="int" value="28"/>
-        <value type="int" value="17"/>
+        <value type="int" value="13"/>
         <value type="int" value="29"/>
         <value type="int" value="4"/>
         <value type="int" value="5"/>
@@ -51,6 +51,7 @@
       <property name="span-monitors" type="bool" value="false"/>
       <property name="mode" type="uint" value="0"/>
       <property name="output-name" type="string" value="Automatic"/>
+      <property name="enter-opacity" type="uint" value="100"/>
     </property>
   </property>
   <property name="plugins" type="empty">
@@ -65,7 +66,6 @@
       <property name="mode" type="uint" value="2"/>
     </property>
     <property name="plugin-15" type="string" value="notification-plugin"/>
-    <property name="plugin-17" type="string" value="wavelan"/>
     <property name="plugin-22" type="string" value="tasklist">
       <property name="show-labels" type="bool" value="true"/>
       <property name="show-handle" type="bool" value="false"/>
@@ -143,6 +143,20 @@
     <property name="plugin-11" type="string" value="battery"/>
     <property name="plugin-12" type="string" value="separator">
       <property name="style" type="uint" value="0"/>
+    </property>
+    <property name="plugin-13" type="string" value="systray">
+      <property name="known-legacy-items" type="array">
+        <value type="string" value="pamac-tray"/>
+      </property>
+      <property name="hidden-legacy-items" type="array">
+        <value type="string" value="pamac-tray"/>
+      </property>
+      <property name="icon-size" type="int" value="0"/>
+      <property name="single-row" type="bool" value="true"/>
+      <property name="hide-new-items" type="bool" value="false"/>
+      <property name="square-icons" type="bool" value="true"/>
+      <property name="symbolic-icons" type="bool" value="true"/>
+      <property name="menu-is-primary" type="bool" value="false"/>
     </property>
   </property>
 </channel>

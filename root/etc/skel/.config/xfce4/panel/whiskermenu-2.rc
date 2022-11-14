@@ -1,5 +1,5 @@
 favorites=xfce4-web-browser.desktop,xfce4-file-manager.desktop,xfce4-terminal-emulator.desktop
-recent=xfce4-web-browser.desktop,nemo.desktop,xfce4-file-manager.desktop,org.gnome.gedit.desktop,xfce4-settings-editor.desktop,firefox.desktop,xfce-session-settings.desktop,xfce-ui-settings.desktop,xfce-settings-manager.desktop,nm-connection-editor.desktop
+recent=qalculate-gtk.desktop,org.manjaro.pamac.manager.desktop,xfce-session-settings.desktop,xfce4-settings-editor.desktop,arduino.desktop,xfce-ui-settings.desktop,xfce-settings-manager.desktop,xfce-backdrop-settings.desktop,org.gnome.Calculator.desktop,xfce4-screenshooter.desktop
 button-icon=preferences-system-search
 button-single-row=true
 show-button-title=false
