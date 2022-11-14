@@ -30,7 +30,10 @@ use gtk::{
   Align,
   TextBuffer,
   PositionType,
-  Scale
+  Scale,
+  InputPurpose,
+  Justification,
+  Entry
 };
 use std::rc::Rc;
 
@@ -122,7 +125,19 @@ fn build_ui(app: &Application) {
     .width_request(400)
     .build();
 
-  let package_label = Label::with_mnemonic("Packages:");
+  let partition_label = Label::builder()
+    .label("Parititions:")
+    .justify(Justification::Left)
+    .xalign(0.0)
+    .css_classes(vec![String::from("section-title")])
+    .build();
+
+  let package_label = Label::builder()
+    .label("Packages:")
+    .justify(Justification::Left)
+    .xalign(0.0)
+    .css_classes(vec![String::from("section-title")])
+    .build();
 
   let package_profile_box = Box::builder()
     .orientation(Orientation::Vertical)
@@ -154,10 +169,30 @@ fn build_ui(app: &Application) {
   package_profile_box.append(&chk_multimedia);
   package_profile_box.append(&chk_nightly);
 
+  let scale_swap = Scale::builder()
+    .orientation(Orientation::Horizontal)
+    .width_request(275)
+    .height_request(80)
+    .value_pos(PositionType::Top)
+    .has_origin(true)
+    .can_target(true)
+    .fill_level(16384.0)
+    .vexpand(false)
+    .build();
+
+  scale_swap.set_value(4096.0);
+  scale_swap.set_increments(256.0, 1024.0);
+  scale_swap.set_range(0.0, 16384.0);
+  scale_swap.add_mark(0.0, PositionType::Bottom,  Some("0 Mb"));
+  scale_swap.add_mark(8192.0, PositionType::Bottom,  Some("8192 Mb"));
+  scale_swap.add_mark(16384.0, PositionType::Bottom, Some("16384 Mb"));
+  scale_swap.set_draw_value(true);
+
   let scale_part_ratio = Scale::builder()
     .orientation(Orientation::Horizontal)
-    .width_request(250)
-    .value_pos(PositionType::Left)
+    .width_request(275)
+    .height_request(80)
+    .value_pos(PositionType::Top)
     .has_origin(true)
     .can_target(true)
     .fill_level(100.0)
@@ -165,17 +200,19 @@ fn build_ui(app: &Application) {
     .build();
 
   scale_part_ratio.set_value(50.0);
-  scale_part_ratio.set_increments(0.1, 1.0);
+  scale_part_ratio.set_increments(1.0, 5.0);
   scale_part_ratio.set_range(0.0, 100.0);
-  scale_part_ratio.add_mark(50.0, PositionType::Bottom, Some("50%"));
+  scale_part_ratio.add_mark(0.0, PositionType::Bottom,  Some("25%"));
+  scale_part_ratio.add_mark(50.0, PositionType::Bottom,  Some("50%"));
+  scale_part_ratio.add_mark(100.0, PositionType::Bottom, Some("100%"));
   scale_part_ratio.set_draw_value(true);
 
-  let slider_wrap = Box::builder()
-    .css_classes(vec![String::from("slider-wrap")])
-    .hexpand(true).vexpand(true)
-    .build();
+  // let slider_wrap = Box::builder()
+  //   .css_classes(vec![String::from("slider-wrap")])
+  //   .hexpand(true).vexpand(true)
+  //   .build();
     
-  slider_wrap.append(&scale_part_ratio);
+  // slider_wrap.append(&scale_part_ratio);
 
   let partition_box = Box::builder()
     .orientation(Orientation::Vertical)
@@ -191,18 +228,21 @@ fn build_ui(app: &Application) {
     .css_classes(vec![String::from("partition-box")])
     .build();
 
-  let root_size_label = Label::with_mnemonic(&format!("{} Mb",(device_data_sizes[0]/1000000) as i32));
-  let home_size_label = Label::with_mnemonic("0 Mb");
+
+  let swap_size_input = Entry::builder()
+    .input_purpose(InputPurpose::Digits)
+    .css_classes(vec![String::from("swap-field")])
+    .build();
 
 
-  partition_slider_box.append(&root_size_label);
-  partition_slider_box.append(&slider_wrap);
-  partition_slider_box.append(&home_size_label);
+  partition_box.append(&partition_label);
+  partition_box.append(&scale_swap);
+  partition_box.append(&scale_part_ratio);
 
-  partition_box.append(&partition_slider_box);
-
-  right_box.append(&package_profile_box);
   right_box.append(&partition_box);
+  right_box.append(&package_profile_box);
+
+
 
   // Create dropdown menu with the labels
   let device_menu = DropDown::from_strings(&device_labels);
@@ -240,23 +280,23 @@ fn build_ui(app: &Application) {
 
 
 
-  set_root_size.connect_activate(clone!(@weak root_size_label => move |action, param| {
-    let mut state = action
-      .state()
-      .expect("Could not get state.")
-      .get::<i32>()
-      .expect("The variant needs to be of type `i32`.");
+  // set_root_size.connect_activate(clone!(@weak root_size_label => move |action, param| {
+  //   let mut state = action
+  //     .state()
+  //     .expect("Could not get state.")
+  //     .get::<i32>()
+  //     .expect("The variant needs to be of type `i32`.");
 
-    // Get parameter
-    let param = param
-      .expect("Could not get parameter.")
-      .get::<i32>()
-      .expect("The variant needs to be of type `i32`.");
+  //   // Get parameter
+  //   let param = param
+  //     .expect("Could not get parameter.")
+  //     .get::<i32>()
+  //     .expect("The variant needs to be of type `i32`.");
 
-    state = param;
+  //   state = param;
 
-    root_size_label.set_label(&format!("{state} Mb"));
-  }));
+  //   root_size_label.set_label(&format!("{state} Mb"));
+  // }));
 
   // Connect to "clicked" signal of `confirm_button`
   confirm_button.connect_clicked(move |confirm_button| {

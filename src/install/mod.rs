@@ -298,13 +298,15 @@ pub fn move_user_config() -> std::io::Result<()> {
 }
 
 pub fn filterPackages(mut packages: Vec<String>) -> Vec<String>{
+  let mut filtered_packages: Vec<String> = Vec::<String>::new();
   for i in 0..packages.len() {
     if packages[i].len() == 0 {
-      packages.remove(i);
+      continue;
     }
+    filtered_packages.push(String::from(&packages[i]));
   }
 
-  return packages;
+  return filtered_packages;
 }
 
 pub fn get_packages(params: PackageProfile) -> std::io::Result<Vec<String>> {
