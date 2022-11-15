@@ -19,6 +19,7 @@ macro_rules! slashdev {
   };
 }
 
+
 pub fn slashdev(name: &str, id: u16) -> String {
   let mut devname = String::from("/dev/");
   devname.push_str(name);
@@ -71,23 +72,25 @@ pub fn sum(arr: &Vec<u64>) -> u64 {
 
 pub fn calculate_partitions(
   device: &Device,
+  swap: u64,
   root: f32,
   home: f32,
   has_home:bool
 ) -> Vec<u64> {
   let mut sizes = Vec::<u64>::new();
   let size: u64 = toMB(device.size);
+  const efi:u64 = 100;
 
   sizes.push(0);
-  sizes.push(300);
-  sizes.push(2048 + sizes[sizes.len()-1]);
+  sizes.push(efi);
+  sizes.push(swap + sizes[sizes.len()-1]);
   if !has_home {
-    sizes.push(size-2350);
+    sizes.push(size - (swap + efi));
     return sizes;
   }
   
-  sizes.push((root * (size - 2350) as f32) as u64 + sizes[sizes.len()-1]);
-  sizes.push((home * (size - 2350) as f32) as u64 + sizes[sizes.len()-1]);
+  sizes.push((root * (size - (swap + efi)) as f32) as u64 + sizes[sizes.len()-1]);
+  sizes.push((home * (size - (swap + efi)) as f32) as u64 + sizes[sizes.len()-1]);
 
   return sizes;
 }
@@ -137,15 +140,21 @@ pub fn make_filesystem(part_info: Vec<PartData>, device_name: &str) {
   }
 }
 
-pub fn wipe_fs(devname: &str) {
+pub fn wipe_fs(name: &str) {
   let umount = Command::new("umount")
     .arg("-Rf").arg("/mnt")
     .spawn();
 
   umount.expect("FAILED").wait();
+  
+  let umount = Command::new("swapoff")
+    .arg(&slashdev!(name, 2))
+    .spawn();
+
+  umount.expect("FAILED").wait();
   // Launch
   let wipefs = Command::new("wipefs")
-    .args(vec!["-a", devname])  
+    .args(vec!["-af", &slashdev!(name)])  
     .spawn();
 
   // Wait
@@ -428,6 +437,7 @@ pub fn install<'a>(data: &UserData) {
 
   let partitions_mb: Vec<u64> = calculate_partitions(
     data.device,
+    data.swap as u64,
     (data.ratio/100.0) as f32, 
     ((100.0-data.ratio)/100.0) as f32,
     data.ratio != 100.0
@@ -436,7 +446,7 @@ pub fn install<'a>(data: &UserData) {
   let devname:&str = &slashdev!(&data.device.name); // Ex: /dev/sdX
 
   // --- DEVICE MANIPULATION ---
-  wipe_fs(devname);
+  wipe_fs(&data.device.name);
   make_partitions(partitions_mb, devname);
   make_filesystem(part_info, &data.device.name);
   mount_part(&data.device.name, false);
