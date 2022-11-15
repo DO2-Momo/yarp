@@ -16,6 +16,7 @@ pub fn validate_config<'a>(data: &UserData) {
       return; // TODO; REMOVE THIS
     }; 
     
+    
     install(data);
 
     return;

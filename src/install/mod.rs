@@ -145,7 +145,7 @@ pub fn wipe_fs(devname: &str) {
   umount.expect("FAILED").wait();
   // Launch
   let wipefs = Command::new("wipefs")
-    .args(vec!["-af", devname])  
+    .args(vec!["-a", devname])  
     .spawn();
 
   // Wait
@@ -426,7 +426,12 @@ pub fn chroot(
 
 pub fn install<'a>(data: &UserData) {
 
-  let partitions_mb: Vec<u64> = calculate_partitions(data.device, 0.7, 0.3, false);
+  let partitions_mb: Vec<u64> = calculate_partitions(
+    data.device,
+    (data.ratio/100.0) as f32, 
+    ((100.0-data.ratio)/100.0) as f32,
+    data.ratio != 100.0
+  );
   let part_info:Vec<PartData> = getPartFsInfo(); 
   let devname:&str = &slashdev!(&data.device.name); // Ex: /dev/sdX
 

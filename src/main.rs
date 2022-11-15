@@ -196,10 +196,10 @@ fn build_ui(app: &Application) {
 
   scale_swap.set_value(4096.0);
   scale_swap.set_increments(256.0, 1024.0);
-  scale_swap.set_range(0.0, 16384.0);
-  scale_swap.add_mark(0.0, PositionType::Bottom,  Some("0 Mb"));
+  scale_swap.set_range(512.0, 8129.0);
+  scale_swap.add_mark(2048.0, PositionType::Bottom,  Some("2048 Mb"));
+  scale_swap.add_mark(4096.0, PositionType::Bottom,  Some("4096 Mb"));
   scale_swap.add_mark(8192.0, PositionType::Bottom,  Some("8192 Mb"));
-  scale_swap.add_mark(16384.0, PositionType::Bottom, Some("16384 Mb"));
   scale_swap.set_draw_value(true);
 
   let scale_part_ratio = Scale::builder()
@@ -215,11 +215,15 @@ fn build_ui(app: &Application) {
 
   scale_part_ratio.set_value(50.0);
   scale_part_ratio.set_increments(1.0, 5.0);
-  scale_part_ratio.set_range(0.0, 100.0);
-  scale_part_ratio.add_mark(0.0, PositionType::Bottom,  Some("25%"));
+  scale_part_ratio.set_range(25.0, 100.0);
+  scale_part_ratio.add_mark(25.0, PositionType::Bottom,  Some("25%"));
   scale_part_ratio.add_mark(50.0, PositionType::Bottom,  Some("50%"));
+
+  scale_part_ratio.add_mark(75.0, PositionType::Bottom,  Some("75%"));
   scale_part_ratio.add_mark(100.0, PositionType::Bottom, Some("100%"));
   scale_part_ratio.set_draw_value(true);
+
+  let size_label = Label::builder().label("Root: Home:").build();
 
   // let slider_wrap = Box::builder()
   //   .css_classes(vec![String::from("slider-wrap")])
@@ -257,6 +261,7 @@ fn build_ui(app: &Application) {
 
   partition_box.append(&root_home_ratio_label);
   partition_box.append(&scale_part_ratio);
+  partition_box.append(&size_label);
 
   right_box.append(&partition_box);
   right_box.append(&package_profile_box);
@@ -291,7 +296,12 @@ fn build_ui(app: &Application) {
 
   // scale_part_ratio.connect_value_changed( move |scale_part_ratio| {
   //   // Activate "win.count" and pass "1" as parameter
-  //   let param = scale_part_ratio.value() as i32 * device_data_sizes[device_menu.selected() as usize] as i32;
+  //   let device: &sysinfo::Device =
+  //     device_data.get(device_menu.selected() as usize);
+
+  //   let space_size:i32 = ((device.size/1000000) as i32)  - scale_swap.value() as i32 - 300;
+
+  //   let param = scale_part_ratio.value() as i32 * space_size;
   //   scale_part_ratio
   //     .activate_action("win.set_root_size", Some(&param.to_variant()))
   //     .expect("The action does not exist.");
@@ -340,10 +350,16 @@ fn build_ui(app: &Application) {
       nightly:    chk_nightly.is_active()
     };
 
+    let space_size:u64 = ((device.size/1000000) as u64)  - scale_swap.value() as u64 - 300;
+    println!("space_size {}", space_size);
     let userData = UserData {
       user, hostname, 
       device: device,
-      packages: packages
+      packages: packages,
+      swap: scale_swap.value() as u64,
+      ratio: scale_part_ratio.value(),
+      root: ((scale_part_ratio.value()/100.0) * space_size as f64) as u64,
+      home: (((100.0 - scale_part_ratio.value())/100.0) * space_size as f64) as u64 
     };
 
     // Validate configuration & Start installation if is valid
@@ -356,7 +372,6 @@ fn build_ui(app: &Application) {
   flex.append(&right_box);
   main_box.append(&flex);
   main_box.append(&confirm_button);
-
   window.add_action(&set_root_size);
 
   // Present window
