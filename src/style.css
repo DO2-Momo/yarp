@@ -12,7 +12,7 @@
 }
 
 .swap-field {
-  margin: border: 1px solid @borders;
+  border: 1px solid @borders;
 }
 
 .right-box {
