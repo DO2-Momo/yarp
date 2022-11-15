@@ -15,7 +15,7 @@ install_yay() {
   cd yay;
   makepkg -si --noconfirm && cd .. && rm -rf yay &&
 
-  install_pamac
+  install_pamac &&
   install_icons
 }
 
