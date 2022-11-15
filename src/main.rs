@@ -126,10 +126,24 @@ fn build_ui(app: &Application) {
     .build();
 
   let partition_label = Label::builder()
-    .label("Parititions:")
+    .label("Partitions:")
     .justify(Justification::Left)
     .xalign(0.0)
     .css_classes(vec![String::from("section-title")])
+    .build();
+  
+  let swap_label = Label::builder()
+    .label("Swap")
+    .justify(Justification::Left)
+    .xalign(0.0)
+    .css_classes(vec![String::from("section-title-2")])
+    .build();
+      
+  let root_home_ratio_label = Label::builder()
+    .label("home/root ratio")
+    .justify(Justification::Left)
+    .xalign(0.0)
+    .css_classes(vec![String::from("section-title-2")])
     .build();
 
   let package_label = Label::builder()
@@ -236,7 +250,12 @@ fn build_ui(app: &Application) {
 
 
   partition_box.append(&partition_label);
+
+
+  partition_box.append(&swap_label);
   partition_box.append(&scale_swap);
+
+  partition_box.append(&root_home_ratio_label);
   partition_box.append(&scale_part_ratio);
 
   right_box.append(&partition_box);

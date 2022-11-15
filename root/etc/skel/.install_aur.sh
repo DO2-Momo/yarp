@@ -1,27 +1,24 @@
 install_icons() {
-  echo "Installing we10x icons";
-  
-  git clone https://aur.archlinux.org/we10x-icon-theme-git.git;
-  cd we10x-icon-theme-git;
-  makepkg -si && cd .. ; rm -rf we10x-icon-theme-git.git;
+  echo "--- Installing we10x icons ---";
+  yay -S we10x-icon-theme-git --noconfirm;
 }
 
 install_pamac() {
-  echo "Installing pamac aur & pacman wrapper";
-  
-  git clone https://aur.archlinux.org/pamac-aur.git;
-  cd pamac-aur;
-  makepkg -si && cd .. ; rm -rf pamac-aur;
+  echo "--- Installing pamac aur & pacman wrapper ---";
+  yay -S pamac-aur --noconfirm;
 }
 
 install_yay() {
-  echo "Installing AUR package manager yay";
+  echo "--- Installing AUR package manager yay ---";
  
   git clone https://aur.archlinux.org/yay.git;
   cd yay;
-  makepkg -si && cd .. ; rm -rf yay;
+  makepkg -si --noconfirm && cd .. && rm -rf yay &&
+
+  install_pamac
+  install_icons
 }
 
-install_yay && install_pamac && install_icons 
+install_yay; 
 
 #rm -rf $HOME/.install_aur.sh

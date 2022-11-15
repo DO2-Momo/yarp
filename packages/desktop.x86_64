@@ -36,3 +36,5 @@ gedit
 gnome-terminal
 nemo
 firefox
+gnome-keyring
+network-manager-applet
