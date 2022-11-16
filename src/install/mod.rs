@@ -449,7 +449,7 @@ pub fn install<'a>(data: &UserData) {
   wipe_fs(&data.device.name);
   make_partitions(partitions_mb, devname);
   make_filesystem(part_info, &data.device.name);
-  mount_part(&data.device.name, false);
+  mount_part(&data.device.name, data.ratio != 100.0);
 
   move_script();
   // // // // // // // // // // // 
