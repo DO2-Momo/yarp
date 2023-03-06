@@ -4,13 +4,4 @@ linux-lts-headers
 base
 grub
 efibootmgr
-dhcpcd
 networkmanager
-git
-vim
-util-linux
-htop
-net-tools
-nmap
-neofetch
-sudo
