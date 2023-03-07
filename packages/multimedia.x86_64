@@ -1,0 +1,20 @@
+# Audio 
+ alsa-utils 
+ flac 
+ pulseaudio 
+ pulseaudio-alsa 
+ pulseaudio-bluetooth 
+ opus 
+ vlc 
+ sof-firmware 
+
+# Video 
+ vlc 
+ gstreamer 
+ x264 
+ ffmpeg 
+ libdvdcss 
+ 
+# Bluetooth 
+ bluez 
+ bluez-utils
