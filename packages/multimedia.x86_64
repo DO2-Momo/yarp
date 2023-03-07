@@ -1,8 +1,21 @@
-sof-firmware
-vlc
-ffmpeg
-pulseaudio
-pulseaudio-bluetooth
-pulseaudio-alsa
-bluez
-bluez-utils
+// Audio
+ pulseaudio
+ pulseaudio-bluetooth
+ pulseaudio-alsa
+ alsa-utils
+ flac 
+ opus
+ sof-firmware
+ vlc
+
+// Video
+ vlc 
+ gstreamer 
+ ffmpeg 
+ x264
+ libdvdcss 
+ 
+
+// Bluetooth
+ bluez
+ bluez-utils
