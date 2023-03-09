@@ -11,9 +11,7 @@
 # Video 
  vlc 
  gstreamer
- gstreamer-plugins-base 
  gstreamer-plugins-good
- gstreamer-plugins-bad
  x264 
  x265
  ffmpeg 
