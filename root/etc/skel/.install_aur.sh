@@ -7,7 +7,9 @@ install_yay () {
 
 }
 
-install_yay;
+# uncomment to install yay
+# install_yay;
+
 
 install_pamac () {
   echo "--- Installing pamac aur & pacman wrapper ---";
@@ -18,3 +20,6 @@ install_pamac () {
 
 # uncomment to install pamac
 # install_pamac;
+
+
+rm -rf ./install_aur.sh;
