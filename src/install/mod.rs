@@ -30,9 +30,9 @@ macro_rules! slashdev {
   };
 }
 
-/**
- * Used for slashdev! macro
- */
+///
+/// Used for slashdev! macro
+///
 pub fn slashdev(name: &str, id: u8) -> String {
   let mut devname = String::from("/dev/");
   devname.push_str(name);
@@ -42,9 +42,9 @@ pub fn slashdev(name: &str, id: u8) -> String {
   return devname;
 }
 
-/**
- *  Partition FS Instructions
- */
+///
+/// Partition FS Instructions
+///
 pub fn get_partitions_fs() -> Vec<PartData<'static>> {
   let mut part_info = vec![
     PartData {
@@ -78,9 +78,9 @@ pub fn space_as_string(size: u64, unit: &str ) -> String {
   return ans;
 }
 
-/**
- * Calculate
- */
+///
+/// Calculate
+///
 pub fn sum(arr: &Vec<u64>) -> u64 {
   let mut sum:u64 = 0;
   for i in 0..arr.len() {
@@ -89,11 +89,10 @@ pub fn sum(arr: &Vec<u64>) -> u64 {
   return sum;
 }
 
-/**
- * Calculate partition sizes
- *
- * TODO: Refactor
- */
+///
+/// Calculate partition sizes
+/// TODO: Refactor
+///
 pub fn calculate_partitions(
   device: &Device,
   swap: u64,
@@ -172,7 +171,7 @@ pub fn make_filesystem(part_info: &Vec<PartData>, device_name: &str) {
 /// 
 /// # Arguments
 ///
-/// * `name` - The name of the device. ex: (sda, hda, sdb, ...)
+///  `name` - The name of the device. ex: (sda, hda, sdb, ...)
 ///
 pub fn wipe_fs(name: &str) {
   let mut umount = Command::new("umount")
@@ -232,9 +231,9 @@ pub fn umount_partitions(devname: &str) -> std::io::Result<()> {
 /// 
 /// # Arguments
 ///
-/// * `devname` - The name of the device. ex: (sda, hda, sdb, ...)
+/// `devname` - The name of the device. ex: (sda, hda, sdb, ...)
 ///
-/// * `has_home` - Whether or not to mount a home directorys
+/// `has_home` - Whether or not to mount a home directorys
 ///
 pub fn mount_partitions(devname: &str, has_home:bool) {
 
@@ -418,10 +417,10 @@ pub fn get_packages(params: PackageProfile) -> std::io::Result<Vec<String>> {
   Ok(filterPackages(ans))
 }
 
-/**
- * Spawn pacstrap
- * installing packages to mounted device
- */
+///
+///Spawn pacstrap
+///installing packages to mounted device
+///
 
 /// Spawn pacstrap
 /// installing packages to mounted device
@@ -518,11 +517,9 @@ pub fn install<'a>(data: &UserData) {
 
   // Get all specified packages
   let packages:Vec<String> = get_packages(data.packages).unwrap();
-  let pack:Vec<&str> = 
-    packages.iter().map(|s| s as &str).collect();
   
   // Install all packages
-  pacstrap(pack);
+  pacstrap(packages.iter().map(|s| s as &str).collect());
   
   // Generate fstab file 
   genfstab();
@@ -538,8 +535,7 @@ pub fn install<'a>(data: &UserData) {
   // Run chroot script
   chroot(&data, true);
 
-
   umount_partitions(&data.device.name);
 
-  println!("--- THE DEVICE SUCCESSFULLY INSTALLED ---");
+  println!("\n--- THE DEVICE SUCCESSFULLY INSTALLED ---");
 }
