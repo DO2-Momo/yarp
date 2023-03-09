@@ -1,6 +1,13 @@
-libreoffice-still
-firefox
-gnome-calculator
-evince
-shotwell
-flameshot
+# Office utilities
+ libreoffice-still
+
+# Web browsing
+ firefox
+
+# Calculator
+ gnome-calculator
+
+# Imaging utilities
+ evince
+ shotwell
+ flameshot
