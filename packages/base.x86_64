@@ -1,16 +1,16 @@
 # Kernel & Basic software
-base
-linux-lts
-linux-lts-headers
-linux-firmware
+ base
+ linux-lts
+ linux-lts-headers
+ linux-firmware
 
 # Bootloader
-efibootmgr
-grub
+ efibootmgr
+ grub
 
 # Network
-networkmanager
+ networkmanager
 
 # Mainly for the AUR
-base-devel
-go
+ base-devel
+ go

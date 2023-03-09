@@ -11,13 +11,11 @@
 # Video 
  vlc 
  gstreamer
- gstreamer-plugins-good
  x264 
  x265
  ffmpeg 
  libdvdcss 
  libvpx
- mvp
  
 # Bluetooth 
  bluez 

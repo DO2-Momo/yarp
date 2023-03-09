@@ -3,13 +3,12 @@ mod components;
 mod validation;
 mod install;
 mod config;
-
 use crate::config::{User, UserData};
 use crate::sysinfo::{Devices, Partition};
 use crate::components::prompt_user;
 use crate::components::control::{PackageProfile};
 
-use crate::install::slashdev;
+use crate::install::partitions::slashdev;
 
 use std::rc::Rc;
 use std::cell::Cell;
