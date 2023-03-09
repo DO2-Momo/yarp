@@ -5,9 +5,23 @@ pub struct FormData {
   pub hostname: EntryBuffer,
   pub password: EntryBuffer,
   pub cpassword: EntryBuffer,
+  pub packages: PackageProfile
 } 
 
 pub struct Form {
   pub widget: Box,
   pub data: FormData
+}
+
+
+#[derive(Copy, Clone)]
+pub struct PackageProfile {
+  pub desktop: bool,
+  pub multimedia: bool,
+  pub utils: bool,
+  pub nightly: bool,
+}
+
+pub enum PackageBundle {
+  BASE, DESKTOP, UTILS, NIGHTLY, MULTIMEDIA
 }

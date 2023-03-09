@@ -1,6 +1,6 @@
-NAME="QCMO Linux"
-PRETTY_NAME="QCMO Linux"
-ID=arch
+NAME="DO2os"
+PRETTY_NAME="DO2 OS"
+ID=do2os
 BUILD_ID=rolling
 ANSI_COLOR="38;2;23;147;209"
 HOME_URL="https://archlinux.org/"

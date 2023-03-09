@@ -1,9 +1,14 @@
-linux-lts
-linux-firmware
-linux-lts-headers
+# Kernel & Basic software
 base
-grub
+linux-lts
+linux-lts-headers
+linux-firmware
+
+# Bootloader
 efibootmgr
+grub
+
+# Network
 networkmanager
 
 # Mainly for the AUR

@@ -1,22 +1,96 @@
-.device-box {
+.device-selector {
   border: 1px solid @borders;
   border-radius: 0.5rem;
   
-  padding: 1rem;
-
   margin: 0.5rem;
   margin-top: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 3rem;
   
-  display: flex;
-  flex-direction: column;
-  background-color: @theme_unfocused_base_color
+  background-color: @theme_unfocused_base_color;
+
 }
 
+.device-element {
+  border-radius: 0.5rem;
+  margin: 0.5rem;
+}
+
+.device-element-p {
+  margin: 0.5rem;
+}
+
+.swap-field {
+  border: 1px solid @borders;
+}
+
+.right-box {
+  /* border: 2px solid red; */
+  margin: 0.75rem;
+
+  padding-left: 2rem;
+  margin-left: 1rem;
+}
+
+.device-button:hover {
+  background-color: @theme_base_color;
+}
+
+.device-button {
+  background-color: @theme_unfocused_base_color;
+}
+
+
+.package-box {
+  padding: 1rem;
+  /* border: 2px solid red; */
+  margin: 1.25rem;
+}
+
+.partition-box {
+  padding: 0rem;
+  /* border: 2px solid purple; */
+  margin: 0.25rem;
+}
+
+.form-section {
+  margin-top: 0.82rem;
+}
+
+.form {
+  
+  padding: 1rem;
+  margin-right: 2.15rem;
+
+  margin-right: 0.5rem;
+  /* border: 2px solid green; */
+}
+
+.main {
+  margin: 1.6rem;
+  /* border: 2px solid red; */
+}
+
+.swap-scale {
+  margin: 1rem;
+}
+
+
+
 dropdown {
-  max-width: 32rem;
-  width: 32rem;
   margin:1rem;
+}
+
+.section-title {
+  font-size: 1.35rem;
+  font-weight: bold;
+  margin: 1rem;
+  margin-left:0px;
+}
+
+.section-title-2 {
+  font-size: 1.15rem;
+  margin: 0.5rem;
+  margin-left:0px;
 }
 
 text {
@@ -24,16 +98,10 @@ text {
   padding: 0.5rem;
   border: 1px solid @borders;
   border-radius: 0.25rem;
-  background-color: @theme_unfocused_base_color
-}
-
-.device-elem {
- gap: 3rem;
- display: flex;
+  background-color: @theme_unfocused_base_color;
 }
 
 .device-label {
-
   margin-left: 1rem;
   margin-right: 1rem;
 }
@@ -41,19 +109,4 @@ text {
 .device-check {
   margin-left: 1rem;
   margin-right: 1rem;
-}
-
-
-.form {
-  margin: 0.75rem;
-}
-
-
-.form-label {
-  margin-right: auto;
-}
-
-.form-input {
-  margin: auto;
-  float: right;
 }

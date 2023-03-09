@@ -1,13 +1,21 @@
-use crate::config::{UserData, PartData};
-use crate::sysinfo::Device;
-use std::{thread, time::Duration};
-use gtk::TextBuffer;
-use beach;
 use std::process::{Stdio,Command};
+use std::process;
+
+
+use crate::config::{UserData, PartData};
+use crate::components::control::{PackageProfile};
+
+
+use crate::sysinfo::Device;
+
+use std::sync::mpsc::channel;
 use ctrlc;
 
 use std::str;
 use std::fs;
+
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 
 use std::io::prelude::*;
 
@@ -22,7 +30,10 @@ macro_rules! slashdev {
   };
 }
 
-pub fn slashdev(name: &str, id: u16) -> String {
+///
+/// Used for slashdev! macro
+///
+pub fn slashdev(name: &str, id: u8) -> String {
   let mut devname = String::from("/dev/");
   devname.push_str(name);
   if id != 0 {
@@ -31,7 +42,10 @@ pub fn slashdev(name: &str, id: u16) -> String {
   return devname;
 }
 
-pub fn getPartFsInfo() -> Vec<PartData<'static>> {
+///
+/// Partition FS Instructions
+///
+pub fn get_partitions_fs() -> Vec<PartData<'static>> {
   let mut part_info = vec![
     PartData {
       fs: "mkfs.fat",
@@ -64,6 +78,9 @@ pub fn space_as_string(size: u64, unit: &str ) -> String {
   return ans;
 }
 
+///
+/// Calculate
+///
 pub fn sum(arr: &Vec<u64>) -> u64 {
   let mut sum:u64 = 0;
   for i in 0..arr.len() {
@@ -72,30 +89,36 @@ pub fn sum(arr: &Vec<u64>) -> u64 {
   return sum;
 }
 
+///
+/// Calculate partition sizes
+/// TODO: Refactor
+///
 pub fn calculate_partitions(
   device: &Device,
+  swap: u64,
   root: f32,
   home: f32,
   has_home:bool
 ) -> Vec<u64> {
   let mut sizes = Vec::<u64>::new();
   let size: u64 = toMB(device.size);
+  let efi: u64 = 100;
 
   sizes.push(0);
-  sizes.push(300);
-  sizes.push(2048 + sizes[sizes.len()-1]);
+  sizes.push(efi);
+  sizes.push(swap + sizes[sizes.len()-1]);
   if !has_home {
-    sizes.push(size-2350);
+    sizes.push(size - (swap + efi));
     return sizes;
   }
   
-  sizes.push((root * (size - 2350) as f32) as u64 + sizes[sizes.len()-1]);
-  sizes.push((home * (size - 2350) as f32) as u64 + sizes[sizes.len()-1]);
+  sizes.push((root * (size - (swap + efi)) as f32) as u64 + sizes[sizes.len()-1]);
+  sizes.push((home * (size - (swap + efi)) as f32) as u64 + sizes[sizes.len()-1]);
 
   return sizes;
 }
 
-pub fn make_partitions(partitions_mb: Vec<u64>, devname: &str) {
+pub fn make_partitions(partitions_mb: &Vec<u64>, devname: &str) {
   // Set GPT label
   let mut parted_label = Command::new("parted")
   .arg(devname)
@@ -128,70 +151,133 @@ pub fn make_partitions(partitions_mb: Vec<u64>, devname: &str) {
   }
 }
 
-pub fn make_filesystem(part_info: Vec<PartData>, device_name: &str) {
+pub fn make_filesystem(part_info: &Vec<PartData>, device_name: &str) {
   // Make file systems according to part_info
-  for i in 0..part_info.len()-1 {
-    let mkfs = Command::new(part_info[i].fs)
-    .args(&part_info[i].args)
-    .arg(&slashdev!(device_name, i as u16 +1))  
-    .spawn();
+  for i in 0..part_info.len() {
+    println!("{}", &slashdev!(device_name, (i + 1) as u8));
 
-    mkfs.expect("FAILED").wait();
+    let mut mkfs = Command::new(part_info[i].fs)
+      .args(&part_info[i].args)
+      .arg(&slashdev!(device_name, (i + 1) as u8))  
+      .spawn()
+      .expect("FAILED");
+
+    mkfs.wait().expect("FAILED");
   }
+
 }
 
-pub fn wipe_fs(devname: &str) {
-  let umount = Command::new("umount")
-    .arg("-Rf").arg("/mnt")
-    .spawn();
+/// Wipe all fs signatures on a device
+/// 
+/// # Arguments
+///
+///  `name` - The name of the device. ex: (sda, hda, sdb, ...)
+///
+pub fn wipe_fs(name: &str) {
+  let mut umount = Command::new("umount")
+    .arg("-l").arg("/mnt")
+    .spawn()
+    .expect("FAILED");
 
-  umount.expect("FAILED").wait();
+  umount.wait().expect("FAILED");
+  
+  let mut umount = Command::new("swapoff")
+    .arg(&slashdev!(name, 2))
+    .spawn()
+    .expect("FAILED");
+
+  umount.wait().expect("FAILED");
+
   // Launch
-  let wipefs = Command::new("wipefs")
-    .args(vec!["-af", devname])  
-    .spawn();
+  let mut wipefs = Command::new("wipefs")
+    .args(vec!["--all", "--force", &slashdev!(name)])  
+    .spawn()
+    .expect("FAILED");
 
   // Wait
-  wipefs.expect("FAILED").wait();
+  wipefs.wait().expect("FAILED");
 
   println!("--- CLEARED DRIVE, FORMATING PARTITIONGS... ---")
 }
 
-pub fn mount_part(devname: &str, has_home:bool) {
+pub fn umount_partitions(devname: &str) -> std::io::Result<()> {
+  let mut umount = Command::new("umount")
+  .arg("-l").arg("/mnt")
+  .spawn()
+  .expect("FAILED");
 
-  let mount_root = Command::new("mount")
+  umount.wait().expect("FAILED");
+
+  // unmount all device partitions
+  let mut umount = Command::new("swapoff")
+    .arg(&slashdev!(devname, 2))
+    .spawn()
+    .expect("FAILED");
+
+  umount.wait().expect("Can't unmount");
+
+  // unmount all device partitions
+  let mut umount = Command::new("umount")
+    .arg("-Rf").arg("/mnt")
+    .spawn()
+    .expect("FAILED");
+
+  umount.wait().expect("Can't unmount");
+
+  Ok(())
+}
+
+/// Mount all paritions
+/// 
+/// # Arguments
+///
+/// `devname` - The name of the device. ex: (sda, hda, sdb, ...)
+///
+/// `has_home` - Whether or not to mount a home directorys
+///
+pub fn mount_partitions(devname: &str, has_home:bool) {
+
+  // Mount root
+  let mut mount_root = Command::new("mount")
     .arg(slashdev!(devname, 3))
     .arg("/mnt")
-    .spawn();
+    .spawn()
+    .expect("FAILED");
 
-  mount_root.expect("FAILED").wait();
+  mount_root.wait().expect("FAILED");
 
-  let swapon = Command::new("swapon")
+  // Mount swap 
+  let mut swapon = Command::new("swapon")
   .arg(slashdev!(devname, 2))
-  .spawn();
+  .spawn()
+  .expect("FAILED");
 
-  swapon.expect("FAILED").wait();
+  swapon.wait().expect("FAILED");
 
-  let mount_boot = Command::new("mount")
+  // Mount boot
+  let mut mount_boot = Command::new("mount")
   .arg("--mkdir").arg(slashdev!(devname, 1))
   .arg("/mnt/boot/efi")
-  .spawn();
+  .spawn()
+  .expect("FAILED");
 
-  mount_boot.expect("FAILED").wait();
+  mount_boot.wait().expect("FAILED");
 
+  // Mount home parition if exists
   if has_home  {
-
-    let mount_home = Command::new("mount")
+    let mut mount_home = Command::new("mount")
     .arg("--mkdir").arg(slashdev!(devname, 4))
     .arg("/mnt/home")
-    .spawn();
+    .spawn()
+    .expect("FAILED");
 
-    mount_home.expect("FAILED").wait();
+    mount_home.wait().expect("FAILED");
   }
 
 }
 
-
+/// Generate an fstab file in /etc/fstab 
+/// 
 pub fn genfstab() {
   // Mount home directory
   let genfstab_cmd = Command::new("genfstab")
@@ -201,238 +287,255 @@ pub fn genfstab() {
       .output()
       .expect("failed to generate fstab file");
 
-  let output = String::from_utf8(genfstab_cmd.stdout).unwrap();
-  std::fs::write("/mnt/etc/fstab", &output).expect("Failed to write file");
+  let output = String::from_utf8(genfstab_cmd.stdout)
+                      .unwrap();
+
+  // Write command output
+  std::fs::write("/mnt/etc/fstab", &output)
+        .expect("Failed to write file");
 } 
 
-pub fn move_script() -> std::io::Result<()> {
-  let mut cp = Command::new("cp")
-  .args(vec![
-    "./root/install.sh",
-    "/mnt/install"
-  ])
-  .spawn();
+pub fn write_hostname(hostname: &str) {
+  std::fs::write("/mnt/etc/hostname", &hostname)
+  .expect("Failed to write file");
+}
 
-  let out = cp.expect("failed").wait();
-
+/// Move installtion chroot script
+/// 
+pub fn enable_install_script() -> std::io::Result<()> {
   let mut chmod = Command::new("chmod")
       .arg("+x")
-      .arg("/mnt/install")
+      .arg("/mnt/install.sh")
       .spawn();
 
-  chmod.expect("failed").wait();
-
+  chmod.expect("FAILED").wait();
 
   Ok(())
 }
 
-pub fn move_user_config() -> std::io::Result<()> {
+/// Move the contents of /root in the child's system root (/)
+/// 
+/// # Returns
+///   handler
+pub fn copy_root() -> std::io::Result<()> {
 
-  let mut os_release = Command::new("cp").arg("-r")
+  let mut etc_copy = Command::new("cp").arg("-r")
   .args(vec![
-    "./root/etc/os-release",
-    "/mnt/etc/os-release"
+    "./root/.",
+    "/mnt/"
   ])
-  .spawn();
+  .spawn()
+  .expect("FAILED");
 
-  let out = os_release.expect("failed").wait();
-  
-
-  let mut sudoers = Command::new("cp").arg("-r")
-  .args(vec![
-    "./root/etc/sudoers",
-    "/mnt/etc/sudoers"
-  ])
-  .spawn();
-
-  let out = sudoers.expect("failed").wait();
-
-  
-
-  let mut cp_skel = Command::new("cp").arg("-r")
-  .args(vec![
-    "./root/etc/skel",
-    "/mnt/etc/"
-  ])
-  .spawn();
-
-  let out = cp_skel.expect("failed").wait();
-
-  
-
-  let mut cp_system_wide = Command::new("cp").arg("-r")
-  .args(vec![
-    "./root/etc/skel/.config",
-    "/mnt/etc/*"
-  ])
-  .spawn();
-
-  let out = cp_system_wide.expect("failed").wait();
-
-  let mut cp_lightdm = Command::new("cp").arg("-r")
-  .args(vec![
-    "./root/etc/lightdm",
-    "/mnt/etc/"
-  ])
-  .spawn();
-
-  let out = cp_lightdm.expect("failed").wait();
-
-  
-  let mut rm_backgrounds = Command::new("rm").arg("-rf")
-  .arg(
-    "/mnt/usr/share/backgrounds/xfce"
-  )
-  .spawn();
-
-  let out = rm_backgrounds.expect("failed").wait();
-
-  let mut cp_lightdm = Command::new("cp").arg("-r")
-  .args(vec![
-    "./root/usr/share/backgrounds/xfce",
-    "/mnt/usr/share/backgrounds/"
-  ])
-  .spawn();
-
-  let out = cp_lightdm.expect("failed").wait();
-
+  let out = etc_copy.wait().expect("Failed to copy");  
   
   Ok(())
 }
 
+/// Remove empty lines in package files, and remove comments
+/// 
+/// # Arguments
+/// 
+/// `packages` - Raw list of packages
+/// 
+/// # Returns
+/// 
+/// The packages without comments & line breaks
+/// 
 pub fn filterPackages(mut packages: Vec<String>) -> Vec<String>{
+  let mut filtered_packages: Vec<String> = Vec::<String>::new();
   for i in 0..packages.len() {
-    if (packages[i].len() == 0) {
-      packages.remove(i);
+    if (packages[i].len() == 0 ||
+       packages[i].chars().nth(0).unwrap() == '#') {
+      continue;
     }
+    filtered_packages.push(String::from(&packages[i]));
   }
 
-  return packages;
+  return filtered_packages;
 }
 
-pub fn getPackages() -> std::io::Result<Vec<String>> {
-
+/// Get package names from files
+/// 
+/// # Arguments
+/// 
+/// `params` - the configuration of the packages
+/// 
+/// # Returns
+/// 
+/// A handler with the package names
+pub fn get_packages(params: PackageProfile) -> std::io::Result<Vec<String>> {
 
   let mut ans: Vec<String> = Vec::<String>::new();
-  // Mount home directory
-  let mut file = fs::File::open("./packages/packages.x86_64")?;
   let mut content = String::new();
-  file.read_to_string(&mut content)?;
+  let mut tmp_content = String::new();
+
+  tmp_content = String::new();
+  let mut file = fs::File::open("./packages/base.x86_64")?;
+  file.read_to_string(&mut tmp_content)?;
+  content.push_str(&tmp_content);
+  content.push_str("\n");
+
+  if params.multimedia == true {
+    tmp_content = String::new();
+    file = fs::File::open("./packages/multimedia.x86_64")?;
+    file.read_to_string(&mut tmp_content)?;
+    content.push_str(&tmp_content);
+    content.push_str("\n");
+  }
+
+  if params.nightly == true {
+    tmp_content = String::new();
+    file = fs::File::open("./packages/nightly.x86_64")?;
+    file.read_to_string(&mut tmp_content)?;
+    content.push_str(&tmp_content);
+    content.push_str("\n");
+  }
+
+  if params.desktop == true {
+    tmp_content = String::new();
+    file = fs::File::open("./packages/desktop.x86_64")?;
+    file.read_to_string(&mut tmp_content)?;
+    content.push_str(&tmp_content);
+    content.push_str("\n");
+  }
+
+  if params.utils == true {
+    tmp_content = String::new();
+    file = fs::File::open("./packages/utils.x86_64")?;
+    file.read_to_string(&mut tmp_content)?;
+    content.push_str(&tmp_content);
+    content.push_str("\n");
+  }
 
   let mut split = content.split("\n");
-  ans = split.collect::<Vec<&str>>().iter().map(|s| s.to_string()).collect();
+  ans = split.collect::<Vec<&str>>()
+    .iter()
+    .map(|s| s.to_string())
+    .collect();
   
   Ok(filterPackages(ans))
 }
 
+///
+///Spawn pacstrap
+///installing packages to mounted device
+///
 
-
+/// Spawn pacstrap
+/// installing packages to mounted device
+/// 
+/// # Arguments
+/// A list of packages
+/// 
 pub fn pacstrap(packages: Vec<&str>) {
 
+  println!("PACKAGES: ");
   for i in 0..packages.len() {
-    println!("PACKAGE: {}", packages[i])
+    print!("{} ", packages[i])
   }
 
-  Command::new("lsblk")
-    .spawn();
+  let mut install_packages = Command::new("pacstrap")
+    .arg("-K").arg("/mnt")
+    .args(packages)
+    .stdout(Stdio::inherit())
+    .spawn()
+    .expect("FAILED");
 
-  println!(" --- PACKSTRAP ---");
+  install_packages.wait().expect("FAILED");
 
-  let install_packages = Command::new("pacstrap")
-      .arg("/mnt")
-      .args(packages)
-      .stdout(Stdio::inherit())
-      .spawn();
-
-
-
-  install_packages
-  .expect("failed").wait();
-
-  println!(" --- END ---");
+  return;
 }
 
-pub fn grub_install(is_removable: bool) -> String {
-
-  let mut optional:Vec<&str> = vec!["--recheck"];
-  if is_removable { optional.push("--removable") };
-
-  let mut grub_install_cmd = 
-      String::from(
-        "grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ARCH"
-      );
-
-  for option in optional {
-      grub_install_cmd.push(' ');
-      grub_install_cmd.push_str(option);
-  }
-
-  return grub_install_cmd;
-}
-
+/// Change root to device's root and execute installation script
+/// 
+/// # Arguments
+///  `data` - The form data from the frontend
+///  `is_removable` - whether or not the system is removable
+/// 
 pub fn chroot(
   data: &UserData,
   is_removable: bool
 ) {
 
-  // Disable quitting
-  ctrlc::set_handler(move || {
-      println!("Can't abort install");
-  })
-  .expect("failed to set ctrlc handler");
-
+  // Enter installed device
   let chroot = Command::new("arch-chroot")
-    .args(vec!["/mnt", "/install"])
+    .args(vec!["/mnt", "/install.sh"])
     .arg(&data.user.name).arg(&data.user.password).arg(&data.hostname)
     .spawn();
 
-  chroot.expect("failed").wait();
+  chroot.expect("FAILED").wait();
   
   return;
 }
 
-pub fn install<'a>(data: &UserData, mut log: &'a TextBuffer) {
-
-  let partitions_mb: Vec<u64> = calculate_partitions(data.device, 0.7, 0.3, false);
-  let part_info:Vec<PartData> = getPartFsInfo(); 
-  let devname:&str = &slashdev!(&data.device.name); // Ex: /dev/sdX
+/// Function calls Sensitive device manipulations
+/// 
+/// Goes from nothing, to a fully partitioned device
+/// 
+/// # Arguments
+/// 
+///  `data` - The data coming from the frontend
+///  `part_ingo` - The static partition configuration
+///  `partitions_mb` - list of partitions sizes in bytes 
+/// 
+pub fn device_manipulation(
+  data: &UserData,
+  part_info: &Vec<PartData>,
+  partitions_mb: &Vec<u64>) {
 
   // --- DEVICE MANIPULATION ---
-  wipe_fs(devname);
-  make_partitions(partitions_mb, devname);
+  wipe_fs(&data.device.name);
+  make_partitions(partitions_mb, &slashdev!(&data.device.name));
   make_filesystem(part_info, &data.device.name);
-  mount_part(&data.device.name, false);
-
-  move_script();
+  mount_partitions(&data.device.name, data.ratio != 100.0);
   // // // // // // // // // // // 
+}
 
-  let packages:Vec<String> = getPackages().unwrap();
-  let pack:Vec<&str> = 
-  packages.iter().map(|s| s as &str).collect();
+/// Install process
+/// 
+/// # Arguments
+/// 
+///   `data` - The data from the frontend
+/// 
+pub fn install<'a>(data: &UserData) {
+
+  let partitions_mb: Vec<u64> = calculate_partitions(
+    data.device,
+    data.swap as u64,
+    (data.ratio/100.0) as f32, 
+    ((100.0-data.ratio)/100.0) as f32,
+    data.ratio != 100.0
+  );
+  let part_info:Vec<PartData> = get_partitions_fs(); 
+
+  // Safe guard for exiting during device manipulation
+  ctrlc::set_handler(move || println!("Can't exit during device manipulation"))
+      .expect("Could not send signal on channel.");
+
+  device_manipulation(data, &part_info, &partitions_mb);
+
+  // Get all specified packages
+  let packages:Vec<String> = get_packages(data.packages).unwrap();
   
-  pacstrap(pack);
+  // Install all packages
+  pacstrap(packages.iter().map(|s| s as &str).collect());
+  
+  // Generate fstab file 
   genfstab();
 
-  move_user_config();
+  // Move user config
+  copy_root();
+
+  write_hostname(&data.hostname);
+
+  // enable chroot script
+  enable_install_script();
+
+  // Run chroot script
   chroot(&data, true);
 
+  umount_partitions(&data.device.name);
 
-  let mut cp_skel = Command::new("cp").arg("-r")
-  .args(vec![
-    "./root/etc/skel/",
-    "/mnt/etc/*"
-  ])
-  .spawn();
-  cp_skel.expect("failed").wait();
-
-
-
-  let umount = Command::new("umount")
-    .arg("-R").arg("/mnt")
-    .spawn();
-
-  umount.expect("FAILED").wait();
-
-
-  println!("--- THE DEVICE SUCCESSFULLY INSTALLED ---");
+  println!("\n--- THE DEVICE SUCCESSFULLY INSTALLED ---");
 }
