@@ -33,7 +33,7 @@ macro_rules! slashdev {
 /**
  * Used for slashdev! macro
  */
-pub fn slashdev(name: &str, id: u16) -> String {
+pub fn slashdev(name: &str, id: u8) -> String {
   let mut devname = String::from("/dev/");
   devname.push_str(name);
   if id != 0 {
@@ -154,76 +154,131 @@ pub fn make_partitions(partitions_mb: &Vec<u64>, devname: &str) {
 
 pub fn make_filesystem(part_info: &Vec<PartData>, device_name: &str) {
   // Make file systems according to part_info
-  for i in 0..part_info.len()-1 {
-    let mkfs = Command::new(part_info[i].fs)
-    .args(&part_info[i].args)
-    .arg(&slashdev!(device_name, i as u16 +1))  
-    .spawn();
+  for i in 0..part_info.len() {
+    println!("{}", &slashdev!(device_name, (i + 1) as u8));
 
-    mkfs.expect("FAILED").wait();
+    let mut mkfs = Command::new(part_info[i].fs)
+      .args(&part_info[i].args)
+      .arg(&slashdev!(device_name, (i + 1) as u8))  
+      .spawn()
+      .expect("FAILED");
+
+    mkfs.wait().expect("FAILED");
   }
+
 }
 
+/// Wipe all fs signatures on a device
+/// 
+/// # Arguments
+///
+/// * `name` - The name of the device. ex: (sda, hda, sdb, ...)
+///
 pub fn wipe_fs(name: &str) {
-  let umount = Command::new("umount")
-    .arg("-Rf").arg("/mnt")
-    .spawn();
+  let mut umount = Command::new("umount")
+    .arg("-l").arg("/mnt")
+    .spawn()
+    .expect("FAILED");
 
-  umount.expect("FAILED").wait();
+  umount.wait().expect("FAILED");
   
-  let umount = Command::new("swapoff")
+  let mut umount = Command::new("swapoff")
     .arg(&slashdev!(name, 2))
-    .spawn();
+    .spawn()
+    .expect("FAILED");
 
-  umount.expect("FAILED").wait();
+  umount.wait().expect("FAILED");
+
   // Launch
-  let wipefs = Command::new("wipefs")
+  let mut wipefs = Command::new("wipefs")
     .args(vec!["--all", "--force", &slashdev!(name)])  
-    .spawn();
+    .spawn()
+    .expect("FAILED");
 
   // Wait
-  wipefs.expect("FAILED").wait();
+  wipefs.wait().expect("FAILED");
 
   println!("--- CLEARED DRIVE, FORMATING PARTITIONGS... ---")
 }
 
-/**
- *
- */
-pub fn mount_part(devname: &str, has_home:bool) {
+pub fn umount_partitions(devname: &str) -> std::io::Result<()> {
+  let mut umount = Command::new("umount")
+  .arg("-l").arg("/mnt")
+  .spawn()
+  .expect("FAILED");
 
-  let mount_root = Command::new("mount")
+  umount.wait().expect("FAILED");
+
+  // unmount all device partitions
+  let mut umount = Command::new("swapoff")
+    .arg(&slashdev!(devname, 2))
+    .spawn()
+    .expect("FAILED");
+
+  umount.wait().expect("Can't unmount");
+
+  // unmount all device partitions
+  let mut umount = Command::new("umount")
+    .arg("-Rf").arg("/mnt")
+    .spawn()
+    .expect("FAILED");
+
+  umount.wait().expect("Can't unmount");
+
+  Ok(())
+}
+
+/// Mount all paritions
+/// 
+/// # Arguments
+///
+/// * `devname` - The name of the device. ex: (sda, hda, sdb, ...)
+///
+/// * `has_home` - Whether or not to mount a home directorys
+///
+pub fn mount_partitions(devname: &str, has_home:bool) {
+
+  // Mount root
+  let mut mount_root = Command::new("mount")
     .arg(slashdev!(devname, 3))
     .arg("/mnt")
-    .spawn();
+    .spawn()
+    .expect("FAILED");
 
-  mount_root.expect("FAILED").wait();
+  mount_root.wait().expect("FAILED");
 
-  let swapon = Command::new("swapon")
+  // Mount swap 
+  let mut swapon = Command::new("swapon")
   .arg(slashdev!(devname, 2))
-  .spawn();
+  .spawn()
+  .expect("FAILED");
 
-  swapon.expect("FAILED").wait();
+  swapon.wait().expect("FAILED");
 
-  let mount_boot = Command::new("mount")
+  // Mount boot
+  let mut mount_boot = Command::new("mount")
   .arg("--mkdir").arg(slashdev!(devname, 1))
   .arg("/mnt/boot/efi")
-  .spawn();
+  .spawn()
+  .expect("FAILED");
 
-  mount_boot.expect("FAILED").wait();
+  mount_boot.wait().expect("FAILED");
 
+  // Mount home parition if exists
   if has_home  {
-
-    let mount_home = Command::new("mount")
+    let mut mount_home = Command::new("mount")
     .arg("--mkdir").arg(slashdev!(devname, 4))
     .arg("/mnt/home")
-    .spawn();
+    .spawn()
+    .expect("FAILED");
 
-    mount_home.expect("FAILED").wait();
+    mount_home.wait().expect("FAILED");
   }
 
 }
 
+/// Generate an fstab file in /etc/fstab 
+/// 
 pub fn genfstab() {
   // Mount home directory
   let genfstab_cmd = Command::new("genfstab")
@@ -233,59 +288,61 @@ pub fn genfstab() {
       .output()
       .expect("failed to generate fstab file");
 
-  let output = String::from_utf8(genfstab_cmd.stdout).unwrap();
-  std::fs::write("/mnt/etc/fstab", &output).expect("Failed to write file");
+  let output = String::from_utf8(genfstab_cmd.stdout)
+                      .unwrap();
+
+  // Write command output
+  std::fs::write("/mnt/etc/fstab", &output)
+        .expect("Failed to write file");
 } 
 
-pub fn move_script() -> std::io::Result<()> {
-  let mut cp = Command::new("cp")
-  .args(vec![
-    "./root/install.sh",
-    "/mnt/install"
-  ])
-  .spawn();
+pub fn write_hostname(hostname: &str) {
+  std::fs::write("/mnt/etc/hostname", &hostname)
+  .expect("Failed to write file");
+}
 
-  let out = cp.expect("failed").wait();
-
+/// Move installtion chroot script
+/// 
+pub fn enable_install_script() -> std::io::Result<()> {
   let mut chmod = Command::new("chmod")
       .arg("+x")
-      .arg("/mnt/install")
+      .arg("/mnt/install.sh")
       .spawn();
 
-  chmod.expect("failed").wait();
+  chmod.expect("FAILED").wait();
 
   Ok(())
 }
 
-pub fn move_user_config() -> std::io::Result<()> {
+/// Move the contents of /root in the child's system root (/)
+/// 
+/// # Returns
+///   handler
+pub fn copy_root() -> std::io::Result<()> {
 
   let mut etc_copy = Command::new("cp").arg("-r")
   .args(vec![
-    "./root/etc/*",
-    "/mnt/etc/"
+    "./root/.",
+    "/mnt/"
   ])
   .spawn()
-  .expect("failed");
+  .expect("FAILED");
 
   let out = etc_copy.wait().expect("Failed to copy");  
-
-  let mut cp_system_wide_config = Command::new("cp").arg("-r")
-  .args(vec![
-    "./root/etc/skel/.config",
-    "/mnt/etc/*"
-  ])
-  .spawn()
-  .expect("failed to execute");
-
-  cp_system_wide_config.wait().expect("Failed to copy");
   
   Ok(())
 }
 
-/**
- * Remove empty lines in package files,
- * and remove comments
- */
+/// Remove empty lines in package files, and remove comments
+/// 
+/// # Arguments
+/// 
+/// `packages` - Raw list of packages
+/// 
+/// # Returns
+/// 
+/// The packages without comments & line breaks
+/// 
 pub fn filterPackages(mut packages: Vec<String>) -> Vec<String>{
   let mut filtered_packages: Vec<String> = Vec::<String>::new();
   for i in 0..packages.len() {
@@ -299,9 +356,15 @@ pub fn filterPackages(mut packages: Vec<String>) -> Vec<String>{
   return filtered_packages;
 }
 
-/**
- * Get package names from files
- */
+/// Get package names from files
+/// 
+/// # Arguments
+/// 
+/// `params` - the configuration of the packages
+/// 
+/// # Returns
+/// 
+/// A handler with the package names
 pub fn get_packages(params: PackageProfile) -> std::io::Result<Vec<String>> {
 
   let mut ans: Vec<String> = Vec::<String>::new();
@@ -359,6 +422,13 @@ pub fn get_packages(params: PackageProfile) -> std::io::Result<Vec<String>> {
  * Spawn pacstrap
  * installing packages to mounted device
  */
+
+/// Spawn pacstrap
+/// installing packages to mounted device
+/// 
+/// # Arguments
+/// A list of packages
+/// 
 pub fn pacstrap(packages: Vec<&str>) {
 
   println!("PACKAGES: ");
@@ -371,18 +441,19 @@ pub fn pacstrap(packages: Vec<&str>) {
     .args(packages)
     .stdout(Stdio::inherit())
     .spawn()
-    .expect("Failed to spawn pacstrap");
+    .expect("FAILED");
 
-  install_packages.wait().expect("Failed to complete package installation");
-
-  println!(" --- PACSTRAP COMPLETED ---");
+  install_packages.wait().expect("FAILED");
 
   return;
 }
 
-/**
- * Change root to device's root and execute installation script
- */
+/// Change root to device's root and execute installation script
+/// 
+/// # Arguments
+///  `data` - The form data from the frontend
+///  `is_removable` - whether or not the system is removable
+/// 
 pub fn chroot(
   data: &UserData,
   is_removable: bool
@@ -390,54 +461,44 @@ pub fn chroot(
 
   // Enter installed device
   let chroot = Command::new("arch-chroot")
-    .args(vec!["/mnt", "/install"])
+    .args(vec!["/mnt", "/install.sh"])
     .arg(&data.user.name).arg(&data.user.password).arg(&data.hostname)
     .spawn();
 
-  chroot.expect("failed").wait();
+  chroot.expect("FAILED").wait();
   
   return;
 }
 
-/**
- * Copy files from skel to user's home
- */
-pub fn init_home() {
-  // Transfer /etc/skel
-  let mut cp_skel = Command::new("cp")
-  .arg("-r")
-  .args(vec![
-    "./root/etc/skel/",
-    "/mnt/etc/*"
-  ])
-  .spawn()
-  .expect("Cant execute cp");
+/// Function calls Sensitive device manipulations
+/// 
+/// Goes from nothing, to a fully partitioned device
+/// 
+/// # Arguments
+/// 
+///  `data` - The data coming from the frontend
+///  `part_ingo` - The static partition configuration
+///  `partitions_mb` - list of partitions sizes in bytes 
+/// 
+pub fn device_manipulation(
+  data: &UserData,
+  part_info: &Vec<PartData>,
+  partitions_mb: &Vec<u64>) {
 
-  cp_skel.wait().expect("Cant copy files");
-}
-
-pub fn exit_handler(critical: bool) {
-  if critical {
-    println!("Can't exit during critical procedure");
-  } else {
-    process::exit(0x00);
-  }
-}
-
-pub fn device_manipulation(data: &UserData, part_info: &Vec<PartData>, partitions_mb: &Vec<u64>) {
   // --- DEVICE MANIPULATION ---
   wipe_fs(&data.device.name);
   make_partitions(partitions_mb, &slashdev!(&data.device.name));
   make_filesystem(part_info, &data.device.name);
-  mount_part(&data.device.name, data.ratio != 100.0);
-
-  move_script();
+  mount_partitions(&data.device.name, data.ratio != 100.0);
   // // // // // // // // // // // 
 }
 
-/**
- * Install process
- */
+/// Install process
+/// 
+/// # Arguments
+/// 
+///   `data` - The data from the frontend
+/// 
 pub fn install<'a>(data: &UserData) {
 
   let partitions_mb: Vec<u64> = calculate_partitions(
@@ -467,25 +528,18 @@ pub fn install<'a>(data: &UserData) {
   genfstab();
 
   // Move user config
-  move_user_config();
+  copy_root();
 
-  let mut critical = true;
+  write_hostname(&data.hostname);
 
+  // enable chroot script
+  enable_install_script();
 
-  
   // Run chroot script
   chroot(&data, true);
 
-  // Initiate files in home
-  init_home();
 
-  // unmount all device partitions
-  let mut umount = Command::new("umount")
-    .arg("-R").arg("/mnt")
-    .spawn()
-    .expect("FAILED");
-
-  umount.wait().expect("Can't mount");
+  umount_partitions(&data.device.name);
 
   println!("--- THE DEVICE SUCCESSFULLY INSTALLED ---");
 }
