@@ -5,3 +5,7 @@ base
 grub
 efibootmgr
 networkmanager
+
+# Mainly for the AUR
+base-devel
+go
