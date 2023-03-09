@@ -309,6 +309,9 @@ pub fn success() -> Box {
 
 }
 
+/**
+ * TODO: Implement validation prompt
+ */
 pub fn prompt_user(data: &FormData)  {
 
 }

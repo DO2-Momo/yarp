@@ -1,6 +1,6 @@
-NAME="Momo Linux"
-PRETTY_NAME="Momo Linux"
-ID=arch
+NAME="DO2os"
+PRETTY_NAME="DO2 OS"
+ID=do2os
 BUILD_ID=rolling
 ANSI_COLOR="38;2;23;147;209"
 HOME_URL="https://archlinux.org/"

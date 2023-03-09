@@ -10,6 +10,10 @@ use crate::components::prompt_user;
 use crate::components::control::{PackageProfile};
 
 use crate::install::slashdev;
+
+use std::rc::Rc;
+use std::cell::Cell;
+
 use std::{str};
 use gtk::gdk::Display;
 use gtk::prelude::*;
@@ -37,12 +41,13 @@ use gtk::{
   Justification,
   Entry
 };
-use std::rc::Rc;
 
-use std::cell::Cell;
 
 const APP_ID: &str = "org.gtk_rs.yarp";
 
+/**
+ * Load CSS Stylesheet
+ */
 fn load_css() {
   // Load the CSS file and add it to the provider
   let provider = CssProvider::new();
@@ -56,24 +61,15 @@ fn load_css() {
   );
 }
 
-fn main() {
-  // Create a new application
-  let app = Application::builder().application_id(APP_ID).build();
-
-  // Connect to "activate" signal of `app`
-  app.connect_startup(|_| load_css());
-  app.connect_activate(build_ui);
-
-  // Run the application
-  app.run();
-}
-
 fn get_device_labels(device_data: &Devices) -> Vec<String> {
   let mut device_names: Vec<String> = Vec::<String>::new();
   // Format to "name  size"
   for i in 0..device_data.blockdevices.len() {
     // Convert to GB
+    
+    // TODO: Clean this math up
     let size_gb:f32 = (( device_data.blockdevices[i].size / 10000000 ) as f32 ) / 100 as f32;
+
     // Push label
     device_names.push(components::getLabel(
       &device_data.blockdevices[i].name,
@@ -84,6 +80,9 @@ fn get_device_labels(device_data: &Devices) -> Vec<String> {
   return device_names;
 }
 
+/**
+ * Get size of a device
+ */
 fn get_device_sizes(devices: &sysinfo::Devices) -> Vec<u128> {
   let mut ans = Vec::<u128>::new();
 
@@ -94,6 +93,9 @@ fn get_device_sizes(devices: &sysinfo::Devices) -> Vec<u128> {
   return ans;
 }
 
+/**
+ * Build GTK GUI
+ */
 fn build_ui(app: &Application) {
   // Get devices data
   let mut device_data: sysinfo::Devices = sysinfo::get_devices();
@@ -135,7 +137,6 @@ fn build_ui(app: &Application) {
   let device_labels: Vec<&str> = device_labels_dyn.iter().map(|s| s as &str).collect();
 
   // Package manager bundles
-
   let chk_desktop:CheckButton    = CheckButton::with_label("Desktop Environement");
   let chk_utils:CheckButton      = CheckButton::with_label("Desktop Features");
   let chk_multimedia:CheckButton = CheckButton::with_label("Multimedia Utils");
@@ -145,9 +146,7 @@ fn build_ui(app: &Application) {
     &chk_desktop, &chk_utils, &chk_multimedia, &chk_nightly
   );
 
-
   // Partitions
-
   let part_scale = Scale::builder()
     .orientation(Orientation::Horizontal)
     .width_request(275)
@@ -198,57 +197,6 @@ fn build_ui(app: &Application) {
 
   let form = components::form("Host & Login:");
 
-  // let device_selector = Box::builder()
-  //   .orientation(Orientation::Vertical)
-  //   .css_classes(vec![String::from("device-selector")])
-  //   .build();
-
-  // let mut device_widgets: Vec<Box> = Vec::<Box>::new();
-
-  // for i in 0..device_labels.len() {
-
-  //   let device_element = Box::builder()
-  //   .css_classes(vec![String::from("device-element")])
-  //     .homogeneous(true)
-  //   .halign(Align::Baseline)
-  //   .build();
-
-  //   device_element.append(
-  //     &Label::builder()
-  //       .label(&install::slashdev(&device_data.blockdevices[i].name, 0))
-  //       .css_classes(vec![String::from("device-element-p")])
-  //       .build()
-  //   );
-
-  //   device_element.append(
-  //     &Label::builder()
-  //       .label(&format!("{} GB", (device_data.blockdevices[i].size) / 1000000000))
-  //       .css_classes(vec![String::from("device-element-p")])
-  //       .build()
-  //   );
-
-  //   let partitions: i32 = device_data.blockdevices[i].children.as_mut().unwrap().len().try_into().unwrap();
-
-  //   device_element.append(&Label::builder()
-  //     .label(&format!("{}", partitions))
-  //     .css_classes(vec![String::from("device-element-p")])
-  //     .build()
-  //   );
-
-  //   let device_element_button = Button::builder()
-  //   .css_classes(vec![String::from("device-button")])
-  //   .child(&device_element)
-  //   .build();
-
-  //   device_element_button.set_property::<&str>("name", &format!("{}", i));
-
-  //   device_element_button.connect_clicked(|device_element_button| {
-  //     println!("Hello world {}", device_element_button.property_value("name").as_ptr())
-  //   });
-
-  //   device_selector.append(&device_element_button);
-  // }
-
   let device_menu_label = Label::builder()
     .label("Device:")
     .justify(Justification::Left)
@@ -258,16 +206,6 @@ fn build_ui(app: &Application) {
 
   // Create dropdown menu with the labels
   let device_menu = DropDown::from_strings(&device_labels);
-
-  // device_menu.connect_selected_item_notify(move |device_menu| {
-  //   // Activate "win.count" and pass "1" as parameter
-  //   let param = (device_data_sizes[device_menu.selected() as usize]/1000000) as i32;
-  //   device_menu
-  //     .activate_action("win.set_root_size", Some(&param.to_variant()))
-  //     .expect("The action does not exist.");
-  // });
-
-
 
   let device_box = Box::builder()
     .css_classes(vec![String::from("dropdown")])
@@ -286,7 +224,8 @@ fn build_ui(app: &Application) {
   // Connect to "clicked" signal of `confirm_button`
   confirm_button.connect_clicked(move |confirm_button| {
 
-    prompt_user(&form.data);
+    // TODO: Implement validation prompt 
+    // prompt_user(&form.data);
 
     // Format all form data to installation data
     let name: String = form.data.username.text();  
@@ -314,6 +253,8 @@ fn build_ui(app: &Application) {
       packages: packages,
       swap: swap_scale.value() as u64,
       ratio: part_scale.value(),
+
+      // TODO: Clean this math up
       root: ((part_scale.value()/100.0) * space_size as f64) as u64,
       home: (((100.0 - part_scale.value())/100.0) * space_size as f64) as u64 
     };
@@ -321,10 +262,6 @@ fn build_ui(app: &Application) {
     // Validate configuration & Start installation if is valid
     validation::validate_config(&userData);
   });
-
-  // part_scale.connect_value_pos_notify(|part_scale| {
-  //   root_home_ratio_label.set_label(&format!("Root {} / Home {} ", part_scale.value(), 100-part_scale.value()))
-  // });
 
   // Add to main continer 
 
@@ -343,3 +280,17 @@ fn build_ui(app: &Application) {
 
 }
 
+/**
+ * MAIN
+ */
+fn main() {
+  // Create a new application
+  let app = Application::builder().application_id(APP_ID).build();
+
+  // Connect to "activate" signal of `app`
+  app.connect_startup(|_| load_css());
+  app.connect_activate(build_ui);
+
+  // Run the application
+  app.run();
+}
