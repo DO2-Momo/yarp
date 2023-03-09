@@ -20,6 +20,8 @@ pub struct PackageProfile {
   pub multimedia: bool,
   pub utils: bool,
   pub nightly: bool,
+  pub amd_gpu: bool,
+  pub intel_gpu: bool
 }
 
 pub enum PackageBundle {

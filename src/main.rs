@@ -145,6 +145,13 @@ fn build_ui(app: &Application) {
     &chk_desktop, &chk_utils, &chk_multimedia, &chk_nightly
   );
 
+  let chk_intel_gpu:CheckButton  = CheckButton::with_label("Intel GPU Drivers");
+  let chk_amd_gpu:CheckButton    = CheckButton::with_label("AMD GPU Drivers");
+
+  let hardware_profile_box = components::hardware_specs(
+    &chk_intel_gpu, &chk_amd_gpu
+  );
+
   // Partitions
   let part_scale = Scale::builder()
     .orientation(Orientation::Horizontal)
@@ -241,7 +248,9 @@ fn build_ui(app: &Application) {
       desktop:    chk_desktop.is_active(),
       utils:      chk_utils.is_active(),
       multimedia: chk_multimedia.is_active(),
-      nightly:    chk_nightly.is_active()
+      nightly:    chk_nightly.is_active(),
+      intel_gpu:  chk_intel_gpu.is_active(),
+      amd_gpu:    chk_amd_gpu.is_active()
     };
 
     let space_size:u64 = ((device.size/1000000) as u64)  - swap_scale.value() as u64 - 300;
@@ -262,11 +271,17 @@ fn build_ui(app: &Application) {
     validation::validate_config(&userData);
   });
 
+
   // Add to main continer 
 
   main_box.append(&device_box);
+
+
+  form.widget.append(&hardware_profile_box);
   flex.append(&form.widget);
   flex.append(&right_box);
+
+  
   main_box.append(&flex);
 
   main_box.append(&confirm_button);

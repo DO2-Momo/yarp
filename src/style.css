@@ -54,6 +54,8 @@
 
 .form-section {
   margin-top: 0.82rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .form {

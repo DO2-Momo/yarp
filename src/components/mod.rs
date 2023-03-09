@@ -41,6 +41,34 @@ pub fn package_profile_menu(
   return package_profile_box;
 }
 
+/// TODO: FETCH FROM OS
+pub fn hardware_specs(
+  chk_amd_gpu: &CheckButton,
+  chk_intel_gpu: &CheckButton
+) -> Box {
+
+  let package_label = Label::builder()
+    .label("Hardware:")
+    .justify(Justification::Left)
+    .xalign(0.0)
+    .css_classes(vec![String::from("section-title")])
+    .build();
+
+  let package_profile_box = Box::builder()
+    .orientation(Orientation::Vertical)
+    .halign(Align::Start)
+    .valign(Align::Start)
+    .css_classes(vec![String::from("package-box")])
+    .build();
+
+
+  package_profile_box.append(&package_label);
+  package_profile_box.append(chk_amd_gpu);
+  package_profile_box.append(chk_intel_gpu);
+
+  return package_profile_box;
+}
+
 pub fn get_package_profile_box(
   chk_desktop: &CheckButton,
   chk_utils: &CheckButton,
@@ -213,7 +241,9 @@ pub fn form(name: &str) -> Form {
       desktop:true,
       utils: false,
       multimedia: false,
-      nightly: false
+      nightly: false,
+      intel_gpu: true,
+      amd_gpu: false
     }
   };
 

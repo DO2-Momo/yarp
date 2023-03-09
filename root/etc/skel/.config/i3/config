@@ -1,0 +1,5 @@
+set $mod Mod4
+
+exec_always ~/.bashrc
+
+bindsym $mod+t exec xfce4-terminal
