@@ -5,18 +5,10 @@
  lightdm
 
 # Main desktop
- xfce4-power-manager
- xfce4-appfinder
- xfce4-whiskermenu
- xfce4-panel
- xfce4-session
- xfce4-settings
- xfce4-terminal
- xfdesktop
- xfconf
- xfwm4
- exo
+ plasma
+ sddm
 
 # file manager
- nemo
  pavucontrol
+ dolphin
+ konsole
