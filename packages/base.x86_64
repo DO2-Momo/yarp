@@ -3,6 +3,7 @@
  linux-lts
  linux-lts-headers
  linux-firmware
+ sof-firmware 
 
 # Bootloader
  efibootmgr

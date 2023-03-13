@@ -160,6 +160,14 @@ pub fn get_packages(params: PackageProfile) -> std::io::Result<Vec<String>> {
     readPackagesFromFile(&mut content, "utils");
   }
 
+  if params.amd_gpu == true {
+    readPackagesFromFile(&mut content, "amd_gpu");
+  }
+
+  if params.intel_gpu == true {
+    readPackagesFromFile(&mut content, "intel_gpu");
+  }
+
   let mut split = content.split("\n");
   let mut ans: Vec<String> = split.collect::<Vec<&str>>()
     .iter()
