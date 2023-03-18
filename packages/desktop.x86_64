@@ -2,21 +2,10 @@
  i3-wm
 
 # Display manager
- lightdm
+ sddm
+ plasma
 
-# Main desktop
- xfce4-power-manager
- xfce4-appfinder
- xfce4-whiskermenu
- xfce4-panel
- xfce4-session
- xfce4-settings
- xfce4-terminal
- xfdesktop
- xfconf
- xfwm4
- exo
+ dolphin
+ konsole
 
-# file manager
- nemo
  pavucontrol

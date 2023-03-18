@@ -1,20 +1,14 @@
 
 use std::process::{Stdio, Command};
-use std::process;
-
 
 use crate::config::{UserData, PartData};
 use crate::components::control::{PackageProfile};
 use crate::sysinfo::Device;
 
-use std::sync::mpsc::channel;
-use ctrlc;
 
 use std::str;
 use std::fs;
 
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
 
 use std::io::prelude::*;
 
@@ -25,7 +19,7 @@ pub mod partitions;
 /// Partition FS Instructions
 ///
 pub fn get_partitions_fs() -> Vec<PartData<'static>> {
-  let mut part_info = vec![
+  let part_info = vec![
     PartData {
       fs: "mkfs.fat",
       args: vec!["-F", "32"]
@@ -59,9 +53,10 @@ pub fn enable_install_script() -> std::io::Result<()> {
   let mut chmod = Command::new("chmod")
       .arg("+x")
       .arg("/mnt/install.sh")
-      .spawn();
+      .spawn()
+      .expect("FAILED");
 
-  chmod.expect("FAILED").wait();
+  chmod.wait().expect("FAILED");
 
   Ok(())
 }
@@ -80,7 +75,7 @@ pub fn copy_root() -> std::io::Result<()> {
   .spawn()
   .expect("FAILED");
 
-  let out = etc_copy.wait().expect("Failed to copy");  
+  etc_copy.wait().expect("Failed to copy");  
   
   Ok(())
 }
@@ -95,13 +90,17 @@ pub fn copy_root() -> std::io::Result<()> {
 /// 
 /// The packages without comments & line breaks
 /// 
-pub fn filterPackages(mut packages: Vec<String>) -> Vec<String>{
+pub fn filter_packages(packages: Vec<String>) -> Vec<String> {
+
   let mut filtered_packages: Vec<String> = Vec::<String>::new();
+  
   for i in 0..packages.len() {
-    if (packages[i].len() == 0 ||
-       packages[i].chars().nth(0).unwrap() == '#') {
+    if packages[i].len() == 0 ||
+       packages[i].chars().nth(0).unwrap() == '#'
+    {
       continue;
     }
+
     filtered_packages.push(String::from(packages[i].trim()));
   }
 
@@ -115,14 +114,22 @@ pub fn filterPackages(mut packages: Vec<String>) -> Vec<String>{
 ///  `content` - A mutable string reference containing the file raw text data
 ///  `pack_name` - The package pack file name
 /// 
-pub fn readPackagesFromFile(content: &mut String, pack_name: &str) -> String {
+pub fn read_packages_bundle(content: &mut String, pack_name: &str) -> String {
   let mut ans = String::new();
 
   let mut path: String = "./packages/".to_owned();
   path.push_str(pack_name); path.push_str(".x86_64");
 
-  let mut file = fs::File::open(&path);
-  file.expect("file not found").read_to_string(&mut ans);
+  let file_handler = fs::File::open(&path);
+
+  let mut file = match file_handler {
+    Ok(file) => file,
+    Err(error) => panic!("Package files not found! {:?}", error)
+  };
+
+  file.read_to_string(&mut ans)
+    .expect("FAILED");
+  
   content.push_str(&ans);
   content.push_str("\n");
 
@@ -142,39 +149,39 @@ pub fn get_packages(params: PackageProfile) -> std::io::Result<Vec<String>> {
 
   let mut content = String::new();
 
-  readPackagesFromFile(&mut content, "base");
+  read_packages_bundle(&mut content, "base");
 
   if params.multimedia == true {
-    readPackagesFromFile(&mut content, "multimedia");
+    read_packages_bundle(&mut content, "multimedia");
   }
 
   if params.nightly == true {
-    readPackagesFromFile(&mut content, "nightly");
+    read_packages_bundle(&mut content, "nightly");
   }
 
   if params.desktop == true {
-    readPackagesFromFile(&mut content, "desktop");
+    read_packages_bundle(&mut content, "desktop");
   }
 
   if params.utils == true {
-    readPackagesFromFile(&mut content, "utils");
+    read_packages_bundle(&mut content, "utils");
   }
 
   if params.amd_gpu == true {
-    readPackagesFromFile(&mut content, "amd_gpu");
+    read_packages_bundle(&mut content, "amd_gpu");
   }
 
   if params.intel_gpu == true {
-    readPackagesFromFile(&mut content, "intel_gpu");
+    read_packages_bundle(&mut content, "intel_gpu");
   }
 
-  let mut split = content.split("\n");
-  let mut ans: Vec<String> = split.collect::<Vec<&str>>()
+  let split = content.split("\n");
+  let ans: Vec<String> = split.collect::<Vec<&str>>()
     .iter()
     .map(|s| s.to_string())
     .collect();
   
-  Ok(filterPackages(ans))
+  Ok(filter_packages(ans))
 }
 
 /// Spawn pacstrap
@@ -206,20 +213,19 @@ pub fn pacstrap(packages: Vec<&str>) {
 /// 
 /// # Arguments
 ///  `data` - The form data from the frontend
-///  `is_removable` - whether or not the system is removable
 /// 
 pub fn chroot(
   data: &UserData,
-  is_removable: bool
 ) {
 
   // Enter installed device
-  let chroot = Command::new("arch-chroot")
+  let mut chroot = Command::new("arch-chroot")
     .args(vec!["/mnt", "/install.sh"])
     .arg(&data.user.name).arg(&data.user.password).arg(&data.hostname)
-    .spawn();
+    .spawn()
+    .expect("FAILED");
 
-  chroot.expect("FAILED").wait();
+  chroot.wait().expect("FAILED");
   
   return;
 }
@@ -275,18 +281,20 @@ pub fn install<'a>(data: &UserData) {
   // Generate fstab file 
   partitions::genfstab();
 
-  // Move user config
-  copy_root();
-
+  copy_root()
+    .expect("root copy failed");
+  
   write_hostname(&data.hostname);
 
   // enable chroot script
-  enable_install_script();
+  enable_install_script()
+    .expect("Can't chmod install script");
 
   // Run chroot script
-  chroot(&data, true);
+  chroot(&data);
 
-  partitions::umount(&data.device.name);
+  partitions::umount(&data.device.name)
+    .expect("Couldn't un mount partitions");
 
   println!("\n--- THE DEVICE SUCCESSFULLY INSTALLED ---");
 }

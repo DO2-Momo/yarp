@@ -2,7 +2,7 @@
 use std::process::{Command};
 use crate::config::PartData;
 
-// sda -> /dev/sda Macro
+/// sda -> /dev/sda Macro
 macro_rules! slashdev {
     ($a: expr) => {
         slashdev($a, 0)
@@ -13,6 +13,7 @@ macro_rules! slashdev {
     };
 }
 
+///
 /// Generate an fstab file in /etc/fstab 
 /// 
 pub fn genfstab() {
@@ -42,10 +43,10 @@ pub fn make(partitions_mb: &Vec<u64>, devname: &str) {
     .arg("mklabel")
     .arg("gpt")
     .spawn()
-    .unwrap();
+    .expect("FAILED");
   
     // Wait
-    parted_label.wait();
+    parted_label.wait().expect("FAILED");
   
     // Make partitions
     for i in 0..(partitions_mb.len()-1) {
@@ -61,15 +62,16 @@ pub fn make(partitions_mb: &Vec<u64>, devname: &str) {
           &space_as_string(partitions_mb[i]+1, "MB"),
           &space_as_string(partitions_mb[i+1]+1, "MB")
         ])  
-        .spawn();
+        .spawn()
+        .expect("FAILED");
         
         // Wait
-        parted.expect("FAILED").wait();
+        parted.wait().expect("FAILED");
     }
 }
 
 ///
-/// 
+///  Make file systems according to partition data
 /// 
 pub fn make_fs(part_info: &Vec<PartData>, device_name: &str) {
     // Make file systems according to part_info
@@ -120,7 +122,7 @@ pub fn wipe_fs(name: &str) {
 }
 
 ///
-/// 
+/// Un mount all mountpoints under /mnt recursively
 /// 
 pub fn umount(devname: &str) -> std::io::Result<()> {
     let mut umount = Command::new("umount")
@@ -196,8 +198,6 @@ pub fn mount(devname: &str, has_home:bool) {
       mount_home.wait().expect("FAILED");
     }  
 }
-  
-
 
 ///
 /// Used for slashdev! macro

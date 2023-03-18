@@ -1,24 +1,18 @@
+#[allow(unused_variables)]
+
 mod sysinfo;
 mod components;
 mod validation;
 mod install;
 mod config;
 use crate::config::{User, UserData};
-use crate::sysinfo::{Devices, Partition};
-use crate::components::prompt_user;
+use crate::sysinfo::{Devices};
 use crate::components::control::{PackageProfile};
-
-use crate::install::partitions::slashdev;
-
-use std::rc::Rc;
-use std::cell::Cell;
 
 use std::{str};
 use gtk::gdk::Display;
 use gtk::prelude::*;
-use gtk::gio::{ListModel, SimpleAction};
-use gtk::glib;
-use glib_macros::clone;
+use gtk::gio::{SimpleAction};
 use gtk::{
   DropDown,
   Button,
@@ -29,24 +23,18 @@ use gtk::{
   Label,
   CheckButton,
   StyleContext,
-  TextView,
-  EntryBuffer,
   CssProvider,
   Align,
-  TextBuffer,
   PositionType,
   Scale,
-  InputPurpose,
   Justification,
-  Entry
 };
-
 
 const APP_ID: &str = "org.gtk_rs.yarp";
 
-/**
- * Load CSS Stylesheet
- */
+///
+///  Load CSS Stylesheet
+///
 fn load_css() {
   // Load the CSS file and add it to the provider
   let provider = CssProvider::new();
@@ -60,6 +48,9 @@ fn load_css() {
   );
 }
 
+///
+///
+///
 fn get_device_labels(device_data: &Devices) -> Vec<String> {
   let mut device_names: Vec<String> = Vec::<String>::new();
   // Format to "name  size"
@@ -70,7 +61,7 @@ fn get_device_labels(device_data: &Devices) -> Vec<String> {
     let size_gb:f32 = (( device_data.blockdevices[i].size / 10000000 ) as f32 ) / 100 as f32;
 
     // Push label
-    device_names.push(components::getLabel(
+    device_names.push(components::get_label(
       &device_data.blockdevices[i].name,
       &size_gb.to_string()
     ));
@@ -79,29 +70,13 @@ fn get_device_labels(device_data: &Devices) -> Vec<String> {
   return device_names;
 }
 
-/**
- * Get size of a device
- */
-fn get_device_sizes(devices: &sysinfo::Devices) -> Vec<u128> {
-  let mut ans = Vec::<u128>::new();
-
-  for i in 0..devices.blockdevices.len() {
-    ans.push(devices.blockdevices[i].size + 0);
-  }
-
-  return ans;
-}
-
-/**
- * Build GTK GUI
- */
+///
+/// Build GTK GUI
+///
 fn build_ui(app: &Application) {
   // Get devices data
-  let mut device_data: sysinfo::Devices = sysinfo::get_devices();
-  let device_data_sizes: Vec<u128> = get_device_sizes(&device_data);
-
-  static mut device_select: usize = 0;
-
+  let device_data: sysinfo::Devices = sysinfo::get_devices();
+  //
   // Create a button with label and margins
   let confirm_button = Button::builder()
     .label("Confirm")
@@ -145,6 +120,7 @@ fn build_ui(app: &Application) {
     &chk_desktop, &chk_utils, &chk_multimedia, &chk_nightly
   );
 
+  // Driver package bundles
   let chk_intel_gpu:CheckButton  = CheckButton::with_label("Intel GPU Drivers");
   let chk_amd_gpu:CheckButton    = CheckButton::with_label("AMD GPU Drivers");
 
@@ -228,7 +204,7 @@ fn build_ui(app: &Application) {
   );
 
   // Connect to "clicked" signal of `confirm_button`
-  confirm_button.connect_clicked(move |confirm_button| {
+  confirm_button.connect_clicked(move |_| {
 
     // TODO: Implement validation prompt 
     // prompt_user(&form.data);
@@ -255,7 +231,7 @@ fn build_ui(app: &Application) {
 
     let space_size:u64 = ((device.size/1000000) as u64)  - swap_scale.value() as u64 - 300;
     println!("space_size {}", space_size);
-    let userData = UserData {
+    let user_data = UserData {
       user, hostname, 
       device: device,
       packages: packages,
@@ -268,7 +244,7 @@ fn build_ui(app: &Application) {
     };
 
     // Validate configuration & Start installation if is valid
-    validation::validate_config(&userData);
+    validation::validate_config(&user_data);
   });
 
 
@@ -294,9 +270,9 @@ fn build_ui(app: &Application) {
 
 }
 
-/**
- * MAIN
- */
+///
+/// MAIN
+///
 fn main() {
   // Create a new application
   let app = Application::builder().application_id(APP_ID).build();
