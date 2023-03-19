@@ -34,4 +34,4 @@ systemctl enable lightdm.service
 # echo "$2" | su - $1 -c "source /home/$1/.install_aur.sh $2"
 
 # Remove self
-rm -f /install
+rm -f /install.sh
