@@ -31,7 +31,7 @@ systemctl enable NetworkManager.service
 systemctl enable sddm.service
 
 # Install AUR 
-# echo "$2" | su - $1 -c "source /home/$1/.install_aur.sh $2"
+echo "$2" | su - $1 -c "source /home/$1/.install_aur.sh $2"
 
 # Remove self
 rm -f /install.sh
