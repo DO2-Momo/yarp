@@ -5,9 +5,7 @@
  firefox
 
 # Calculator
- gnome-calculator
+ gwenview
 
-# Imaging utilities
- evince
- shotwell
- flameshot
+# Images
+ spectacle
