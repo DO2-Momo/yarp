@@ -1,11 +1,58 @@
-# Fallback GUI
- i3-wm
-
-# Display manager
+# Desktop
  sddm
- plasma
+ bluedevil
+ breeze
+ breeze-gtk
+ discover
+ drkonqi
+ flatpak-kcm
+ kactivitymanagerd
+ kde-cli-tools
+ kde-gtk-config
+ kdecoration
+ kdeplasma-addons
+ kgamma5
+ khotkeys
+ kinfocenter
+ kmenuedit
+ kpipewire
+ kscreen
+ kscreenlocker
+ ksshaskpass
+ ksystemstats
+ kwallet-pam
+ kwayland-integration
+ kwin
+ kwrited
+ layer-shell-qt
+ libkscreen
+ libksysguard
+ milou
+ oxygen
+ oxygen-sounds
+ plasma-browser-integration
+ plasma-desktop
+ plasma-disks
+ plasma-firewall
+ plasma-integration
+ plasma-nm
+ plasma-pa
+ plasma-sdk
+ plasma-systemmonitor
+ plasma-thunderbolt
+ plasma-vault
+ plasma-welcome
+ plasma-workspace
+ plasma-workspace-wallpapers
+ polkit-kde-agent
+ powerdevil
+ sddm-kcm
+ systemsettings
+ xdg-desktop-portal-kde
 
+# Basic utils
  dolphin
  konsole
 
+# Sound
  pavucontrol
