@@ -28,7 +28,7 @@ grub-mkconfig -o /boot/grub/grub.cfg
 # Enable services here
 #
 systemctl enable NetworkManager.service
-systemctl enable lightdm.service
+systemctl enable sddm.service
 
 # Install AUR 
 # echo "$2" | su - $1 -c "source /home/$1/.install_aur.sh $2"
