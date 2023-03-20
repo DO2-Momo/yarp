@@ -28,4 +28,25 @@ install_pamac () {
 # uncomment to install pamac
 # install_pamac;
 
+install_openoffice () {
+  echo "--- Installing pamac aur & pacman wrapper ---";
+  
+  yay -S openoffice-bin --noconfirm
+}
+
+# uncomment to install pamac
+# install_openoofice;
+
+
+
+
+
+
+
+
+
+
+
+
+
 rm -rf ./install_aur.sh;
