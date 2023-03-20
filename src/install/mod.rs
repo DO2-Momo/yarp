@@ -9,7 +9,6 @@ use crate::sysinfo::Device;
 use std::str;
 use std::fs;
 
-
 use std::io::prelude::*;
 
 pub mod logic;
@@ -50,6 +49,7 @@ pub fn write_hostname(hostname: &str) {
 /// Move installtion chroot script
 /// 
 pub fn enable_install_script() -> std::io::Result<()> {
+ 
   let mut chmod = Command::new("chmod")
       .arg("+x")
       .arg("/mnt/install.sh")
@@ -90,21 +90,16 @@ pub fn copy_root() -> std::io::Result<()> {
 /// 
 /// The packages without comments & line breaks
 /// 
-pub fn filter_packages(packages: Vec<String>) -> Vec<String> {
+pub fn filter_packages(packages: &mut Vec<String>) {
 
-  let mut filtered_packages: Vec<String> = Vec::<String>::new();
-  
-  for i in 0..packages.len() {
-    if packages[i].len() == 0 ||
-       packages[i].chars().nth(0).unwrap() == '#'
-    {
-      continue;
-    }
+  packages.iter_mut().for_each(
+    |p| *p = p.trim().to_string()
+  );
 
-    filtered_packages.push(String::from(packages[i].trim()));
-  }
+  packages.retain_mut(|x| {
+    x.len() != 0 && x.chars().nth(0).unwrap() != '#'
+  });
 
-  return filtered_packages;
 }
 
 /// Read a package pack file, and add it to the mutable String reference
@@ -176,12 +171,14 @@ pub fn get_packages(params: PackageProfile) -> std::io::Result<Vec<String>> {
   }
 
   let split = content.split("\n");
-  let ans: Vec<String> = split.collect::<Vec<&str>>()
+  let mut ans: Vec<String> = split.collect::<Vec<&str>>()
     .iter()
     .map(|s| s.to_string())
     .collect();
   
-  Ok(filter_packages(ans))
+  filter_packages(&mut ans);
+
+  Ok(ans)
 }
 
 /// Spawn pacstrap
@@ -190,7 +187,7 @@ pub fn get_packages(params: PackageProfile) -> std::io::Result<Vec<String>> {
 /// # Arguments
 /// A list of packages
 /// 
-pub fn pacstrap(packages: Vec<&str>) {
+pub fn pacstrap(packages: Vec<&str>) -> std::io::Result<()>  {
 
   println!("PACKAGES: ");
   for i in 0..packages.len() {
@@ -202,11 +199,11 @@ pub fn pacstrap(packages: Vec<&str>) {
     .args(packages)
     .stdout(Stdio::inherit())
     .spawn()
-    .expect("FAILED");
+    .unwrap();
 
-  install_packages.wait().expect("FAILED");
+  let _res = install_packages.wait().expect("FAILED");
 
-  return;
+  Ok(())
 }
 
 /// Change root to device's root and execute installation script
@@ -294,7 +291,7 @@ pub fn install<'a>(data: &UserData) {
   chroot(&data);
 
   partitions::umount(&data.device.name)
-    .expect("Couldn't un mount partitions");
+    .expect("Couldn't unmount partitions");
 
   println!("\n--- THE DEVICE SUCCESSFULLY INSTALLED ---");
 }
