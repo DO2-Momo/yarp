@@ -13,7 +13,7 @@ install_yay;
 install_google_chrome () {
   echo "--- Installing pamac aur & pacman wrapper ---";
   
-  yay -S google-chrome-stable --noconfirm
+  yay -S google-chrome --noconfirm
 }
 
 install_google_chrome;
