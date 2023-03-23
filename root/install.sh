@@ -23,6 +23,8 @@ grub-install \
 
 grub-mkconfig -o /boot/grub/grub.cfg
 
+# Generate Locale
+locale-gen
 
 #
 # Enable services here
