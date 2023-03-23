@@ -1,7 +1,11 @@
 # Nightly packages
  code
+ arduino-cli
  arduino
  neovim
  ranger
  htop
  neofetch
+ nmap
+ gnu-netcat
+ wireshark-qt
