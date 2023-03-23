@@ -17,3 +17,6 @@
 # Bluetooth 
  bluez 
  bluez-utils
+
+# FS
+ ntfs-3g
