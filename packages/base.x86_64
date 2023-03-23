@@ -1,6 +1,7 @@
 # Kernel & Basic software
  base
  linux-lts
+ linux-atm
  linux-lts-headers
  linux-firmware
  sof-firmware 
