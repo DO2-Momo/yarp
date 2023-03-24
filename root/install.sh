@@ -1,5 +1,3 @@
-# This script installs the grub booloader and enables 
-
 #
 # Users & Passwords
 #
@@ -25,6 +23,15 @@ grub-mkconfig -o /boot/grub/grub.cfg
 
 # Generate Locale
 locale-gen
+
+# Create desktop directories
+mkdir /home/$1/Desktop;
+mkdir /home/$1/Downloads;
+mkdir /home/$1/Documents;
+mkdir /home/$1/Pictures;
+mkdir /home/$1/Videos;
+
+chown -R $1 /home/$1
 
 #
 # Enable services here
