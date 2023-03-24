@@ -28,8 +28,6 @@
  libkscreen
  libksysguard
  milou
- oxygen
- oxygen-sounds
  plasma-browser-integration
  plasma-desktop
  plasma-disks
@@ -49,6 +47,9 @@
  sddm-kcm
  systemsettings
  xdg-desktop-portal-kde
+
+# fonts
+ ttf-liberation
 
 # Basic utils
  dolphin
