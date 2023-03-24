@@ -16,8 +16,8 @@ pub fn calculate_partitions(
     swap: u64,
     root: f32,
     home: f32,
-    has_home:bool
-    ) -> Vec<u64> {
+    has_home:bool) -> Vec<u64>
+{
     let mut sizes = Vec::<u64>::new();
     let size: u64 = to_mb(device.size);
     let efi: u64 = 100;
