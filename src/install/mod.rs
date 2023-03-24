@@ -5,6 +5,7 @@ use crate::config::{UserData, PartData};
 use crate::components::control::{PackageProfile};
 use crate::sysinfo::Device;
 
+use std::path::Path;
 
 use std::str;
 use std::fs;
@@ -240,14 +241,41 @@ pub fn chroot(
 pub fn device_manipulation(
   data: &UserData,
   part_info: &Vec<PartData>,
-  partitions_mb: &Vec<u64>) {
+  partitions_mb: &Vec<u64>,
+  is_legacy: bool) 
+{
 
-  // --- DEVICE MANIPULATION ---
+  println!("\n --- Legacy: {} ---\n ", if is_legacy { "TRUE" } else { "FALSE" });
+  
+  // // // // // // // // // // // // //
+  // -----  DEVICE MANIPULATION ----- //
   partitions::wipe_fs(&data.device.name);
-  partitions::make(partitions_mb, &partitions::slashdev(&data.device.name, 0));
+
+  if is_legacy {
+    partitions::make_mbr(
+      partitions_mb,
+      &partitions::slashdev(&data.device.name, 0)
+    );
+  } else {
+    partitions::make_uefi(
+      partitions_mb,
+      &partitions::slashdev(&data.device.name, 0)
+    );
+  }
+  
   partitions::make_fs(part_info, &data.device.name);
   partitions::mount(&data.device.name, data.ratio != 100.0);
-  // // // // // // // // // // // 
+  // // // // // // // // // // // // //
+}
+
+///
+/// Detect if parent system booted in UEFI or Legacy mode
+/// 
+/// # Returns
+///   Whether or not the system was booted in Legacy mode
+/// 
+pub fn is_legacy() -> bool {
+  return !Path::new("/sys/firmware/efi").exists();
 }
 
 /// Install process
@@ -265,15 +293,18 @@ pub fn install<'a>(data: &UserData) {
     ((100.0-data.ratio)/100.0) as f32,
     data.ratio != 100.0
   );
+
   let part_info:Vec<PartData> = get_partitions_fs(); 
 
-  device_manipulation(data, &part_info, &partitions_mb);
+  // Device manipulation
+  device_manipulation(data, &part_info, &partitions_mb, is_legacy());
 
   // Get all specified packages
   let packages:Vec<String> = get_packages(data.packages).unwrap();
   
   // Install all packages
-  pacstrap(packages.iter().map(|s| s as &str).collect());
+  pacstrap(packages.iter().map(|s| s as &str).collect())
+    .expect("FAILED");
   
   // Generate fstab file 
   partitions::genfstab();

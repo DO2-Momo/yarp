@@ -36,7 +36,55 @@ pub fn genfstab() {
 ///
 /// 
 /// 
-pub fn make(partitions_mb: &Vec<u64>, devname: &str) {
+pub fn make_mbr(partitions_mb: &Vec<u64>, devname: &str) {
+    // Set msdos label
+    let mut parted_label = Command::new("parted")
+        .arg(devname)
+        .arg("mklabel")
+        .arg("msdos")
+        .spawn()
+        .expect("FAILED");
+  
+    // Wait
+    parted_label.wait().expect("FAILED");
+  
+    // Make partitions
+    for i in 0..(partitions_mb.len()-1) {
+      // Launch parted
+      let mut parted = Command::new("parted")
+        .args(vec![
+          "-s",
+          "-a",
+          "optimal",
+          devname,
+          "mkpart",
+          "primary",
+          &space_as_string(partitions_mb[i]+1, "MB"),
+          &space_as_string(partitions_mb[i+1]+1, "MB")
+        ])  
+        .spawn()
+        .expect("FAILED");
+        
+        // Wait
+        parted.wait().expect("FAILED");
+    }
+
+    // Set 1st partition as bootable
+    let mut parted_boot_flag = Command::new("parted")
+        .arg(devname).arg("-s")
+        .arg("set").arg("1")
+        .arg("boot").arg("on")
+        .spawn()
+        .expect("FAILED");
+    
+    // Wait
+    parted_boot_flag.wait().expect("FAILED");
+}
+
+///
+/// 
+/// 
+pub fn make_uefi(partitions_mb: &Vec<u64>, devname: &str) {
     // Set GPT label
     let mut parted_label = Command::new("parted")
     .arg(devname)
@@ -212,7 +260,7 @@ pub fn slashdev(name: &str, id: u8) -> String {
 }
 
 
-pub fn space_as_string(size: u64, unit: &str ) -> String {
+pub fn space_as_string(size: u64, unit: &str) -> String {
     let mut ans = String::new();
     ans.push_str(&size.to_string());
     ans.push_str(unit);
