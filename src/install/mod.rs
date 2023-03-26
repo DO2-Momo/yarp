@@ -219,7 +219,9 @@ pub fn chroot(
   // Enter installed device
   let mut chroot = Command::new("arch-chroot")
     .args(vec!["/mnt", "/install.sh"])
-    .arg(&data.user.name).arg(&data.user.password).arg(&data.hostname)
+    .arg(&data.user.name).arg(&data.user.password)
+    .arg(if is_legacy() { "true" } else { "false" })
+    .arg(&partitions::slashdev(&data.device.name, 0))
     .spawn()
     .expect("FAILED");
 
