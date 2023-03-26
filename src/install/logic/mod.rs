@@ -3,8 +3,8 @@ use crate::install::Device;
 ///
 /// Convert bytes to megabytes
 ///
-pub fn to_mb(size: u128) -> u64 {
-    return (size as u64) / 1000000; 
+pub fn to_mb(size: u128) -> u128 {
+    return size / 1000000;
 }
 
 ///
@@ -13,26 +13,27 @@ pub fn to_mb(size: u128) -> u64 {
 ///
 pub fn calculate_partitions(
     device: &Device,
-    swap: u64,
-    root: f32,
-    home: f32,
-    has_home:bool) -> Vec<u64>
+    swap: u128,
+    root_home_ratio: f64,
+    has_home:bool) -> Vec<u128>
 {
-    let mut sizes = Vec::<u64>::new();
-    let size: u64 = to_mb(device.size);
-    let efi: u64 = 100;
+    let mut sizes = Vec::<u128>::new();
+    let size = to_mb(device.size);
+    let efi: u128 = 105;
 
     sizes.push(0);
     sizes.push(efi);
     sizes.push(swap + sizes[sizes.len()-1]);
 
     if !has_home {
-        sizes.push(size - (swap + efi));
+        sizes.push(size);
         return sizes;
     }
 
-    sizes.push((root * (size - (swap + efi)) as f32) as u64 + sizes[sizes.len()-1]);
-    sizes.push((home * (size - (swap + efi)) as f32) as u64 + sizes[sizes.len()-1]);
+    let rest = size - sizes[sizes.len()-1];
+
+    sizes.push((root_home_ratio * rest as f64) as u128 + sizes[sizes.len()-1]);
+    sizes.push(size);
 
     return sizes;
 }

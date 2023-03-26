@@ -243,7 +243,7 @@ pub fn chroot(
 pub fn device_manipulation(
   data: &UserData,
   part_info: &Vec<PartData>,
-  partitions_mb: &Vec<u64>,
+  partitions_mb: &Vec<u128>,
   is_legacy: bool) 
 {
 
@@ -288,11 +288,10 @@ pub fn is_legacy() -> bool {
 /// 
 pub fn install<'a>(data: &UserData) {
 
-  let partitions_mb: Vec<u64> = logic::calculate_partitions(
+  let partitions_mb: Vec<u128> = logic::calculate_partitions(
     data.device,
-    data.swap as u64,
-    (data.ratio/100.0) as f32, 
-    ((100.0-data.ratio)/100.0) as f32,
+    data.swap as u128,
+    (data.ratio/100.0) as f64,
     data.ratio != 100.0
   );
 
