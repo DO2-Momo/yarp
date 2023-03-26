@@ -36,7 +36,7 @@ pub fn genfstab() {
 ///
 /// 
 /// 
-pub fn make_mbr(partitions_mb: &Vec<u64>, devname: &str) {
+pub fn make_mbr(partitions_mb: &Vec<u128>, devname: &str) {
     // Set msdos label
     let mut parted_label = Command::new("parted")
         .arg(devname)
@@ -53,9 +53,9 @@ pub fn make_mbr(partitions_mb: &Vec<u64>, devname: &str) {
       // Launch parted
       let mut parted = Command::new("parted")
         .args(vec![
+         "-a",
+         "none",
           "-s",
-          "-a",
-          "optimal",
           devname,
           "mkpart",
           "primary",
@@ -84,7 +84,7 @@ pub fn make_mbr(partitions_mb: &Vec<u64>, devname: &str) {
 ///
 /// 
 /// 
-pub fn make_uefi(partitions_mb: &Vec<u64>, devname: &str) {
+pub fn make_uefi(partitions_mb: &Vec<u128>, devname: &str) {
     // Set GPT label
     let mut parted_label = Command::new("parted")
     .arg(devname)
@@ -101,9 +101,9 @@ pub fn make_uefi(partitions_mb: &Vec<u64>, devname: &str) {
       // Launch parted
       let mut parted = Command::new("parted")
         .args(vec![
-          "-s",
           "-a",
-          "optimal",
+          "none",
+          "-s",
           devname,
           "mkpart",
           "primary",
@@ -173,12 +173,6 @@ pub fn wipe_fs(name: &str) {
 /// Un mount all mountpoints under /mnt recursively
 /// 
 pub fn umount(devname: &str) -> std::io::Result<()> {
-    let mut umount = Command::new("umount")
-    .arg("-l").arg("/mnt")
-    .spawn()
-    .expect("FAILED");
-
-    umount.wait().expect("FAILED");
 
     // unmount all device partitions
     let mut umount = Command::new("swapoff")
@@ -190,7 +184,7 @@ pub fn umount(devname: &str) -> std::io::Result<()> {
 
     // unmount all device partitions
     let mut umount = Command::new("umount")
-        .arg("-Rf").arg("/mnt")
+        .arg("-Rl").arg("/mnt")
         .spawn()
         .expect("FAILED");
 
