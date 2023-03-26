@@ -59,8 +59,8 @@ pub fn make_mbr(partitions_mb: &Vec<u64>, devname: &str) {
           devname,
           "mkpart",
           "primary",
-          &space_as_string(partitions_mb[i]+1, "MB"),
-          &space_as_string(partitions_mb[i+1]+1, "MB")
+          &space_as_string::<u128>(partitions_mb[i], "MB"),
+          &space_as_string::<u128>(partitions_mb[i+1], "MB")
         ])  
         .spawn()
         .expect("FAILED");
