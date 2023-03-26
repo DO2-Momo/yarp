@@ -7,6 +7,9 @@ use crate::sysinfo::Device;
 
 use std::path::Path;
 
+use std::thread::sleep;
+use std::time::Duration;
+
 use std::str;
 use std::fs;
 
@@ -261,6 +264,7 @@ pub fn device_manipulation(
   }
   
   partitions::make_fs(part_info, &data.device.name);
+
   partitions::mount(&data.device.name, data.ratio != 100.0);
   // // // // // // // // // // // // //
 }
@@ -294,6 +298,7 @@ pub fn install<'a>(data: &UserData) {
 
   // Device manipulation
   device_manipulation(data, &part_info, &partitions_mb, is_legacy());
+  
 
   // Get all specified packages
   let packages:Vec<String> = get_packages(data.packages).unwrap();
@@ -314,11 +319,19 @@ pub fn install<'a>(data: &UserData) {
   enable_install_script()
     .expect("Can't chmod install script");
 
+  sleep(Duration::from_secs(1));
+
   // Run chroot script
   chroot(&data);
 
+  sleep(Duration::from_secs(2));
+
+  // Unmount all partitions
   partitions::umount(&data.device.name)
     .expect("Couldn't unmount partitions");
+
+  
+  sleep(Duration::from_secs(1));
 
   println!("\n--- THE DEVICE SUCCESSFULLY INSTALLED ---");
 }
