@@ -260,7 +260,7 @@ pub fn slashdev(name: &str, id: u8) -> String {
 }
 
 
-pub fn space_as_string(size: u64, unit: &str) -> String {
+pub fn space_as_string<T: std::fmt::Display>(size: T, unit: &str) -> String {
     let mut ans = String::new();
     ans.push_str(&size.to_string());
     ans.push_str(unit);
