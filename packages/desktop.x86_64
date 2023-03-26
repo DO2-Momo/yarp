@@ -1,9 +1,11 @@
+# for the AUR
+ go
+
 # Desktop
  sddm
  bluedevil
  breeze
  breeze-gtk
- discover
  drkonqi
  flatpak-kcm
  kactivitymanagerd
@@ -47,6 +49,7 @@
  sddm-kcm
  systemsettings
  xdg-desktop-portal-kde
+ gnome-keyring
 
 # fonts
  ttf-liberation
@@ -56,6 +59,6 @@
  konsole
 
 # Sound
- pavucontrol
+ wireplumber
  dolphin
  konsole
