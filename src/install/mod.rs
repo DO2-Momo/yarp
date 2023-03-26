@@ -244,7 +244,6 @@ pub fn device_manipulation(
   partitions_mb: &Vec<u128>,
   is_legacy: bool) 
 {
-
   println!("\n --- Legacy: {} ---\n ", if is_legacy { "TRUE" } else { "FALSE" });
   
   // // // // // // // // // // // // //
@@ -267,6 +266,19 @@ pub fn device_manipulation(
 
   partitions::mount(&data.device.name, data.ratio != 100.0);
   // // // // // // // // // // // // //
+}
+
+pub fn repair_fs(device_name: &str, partitions_mb: &Vec<u128>) {
+  for i in 1..partitions_mb.len() {
+    let mut fsck = Command::new("fsck")
+      .arg("-r").arg(&partitions::slashdev(device_name, i as u8))
+      .spawn()
+      .expect("FAILED");
+  
+      fsck.wait().expect("FAILED");
+
+      sleep(Duration::from_millis(250));
+  }
 }
 
 ///
@@ -331,7 +343,10 @@ pub fn install<'a>(data: &UserData) {
     .expect("Couldn't unmount partitions");
 
   
-  sleep(Duration::from_secs(1));
+  sleep(Duration::from_secs(2));
+
+  repair_fs(&data.device.name, &partitions_mb);
+
 
   println!("\n--- THE DEVICE SUCCESSFULLY INSTALLED ---");
 }

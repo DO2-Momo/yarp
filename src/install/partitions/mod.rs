@@ -174,6 +174,8 @@ pub fn wipe_fs(name: &str) {
 /// 
 pub fn umount(devname: &str) -> std::io::Result<()> {
 
+    println!("--- UNMOUNTING --- ");
+
     // unmount all device partitions
     let mut umount = Command::new("swapoff")
         .arg(&slashdev!(devname, 2))
@@ -184,7 +186,7 @@ pub fn umount(devname: &str) -> std::io::Result<()> {
 
     // unmount all device partitions
     let mut umount = Command::new("umount")
-        .arg("-Rl").arg("/mnt")
+        .arg("-Rlf").arg("/mnt")
         .spawn()
         .expect("FAILED");
 
