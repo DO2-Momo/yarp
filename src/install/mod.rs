@@ -190,11 +190,6 @@ pub fn get_packages(params: PackageProfile) -> std::io::Result<Vec<String>> {
 /// 
 pub fn pacstrap(packages: Vec<&str>) -> std::io::Result<()>  {
 
-  println!("PACKAGES: ");
-  for i in 0..packages.len() {
-    print!("{} ", packages[i])
-  }
-
   let mut install_packages = Command::new("pacstrap")
     .arg("-K").arg("/mnt")
     .args(packages)
