@@ -7,6 +7,8 @@ wheel:Vertical;NoModifier=org.kde.switchdesktop
 RightButton;NoModifier=org.kde.contextmenu
 
 [Containments][1]
+ItemGeometries-1920x1080=
+ItemGeometriesHorizontal=
 activityId=533ea400-e9a9-48c1-84b2-897de7775871
 formfactor=0
 immutability=1
@@ -49,8 +51,14 @@ PreloadWeight=100
 popupHeight=514
 popupWidth=651
 
+[Containments][2][Applets][3][Configuration][ConfigDialog]
+DialogHeight=540
+DialogWidth=720
+
 [Containments][2][Applets][3][Configuration][General]
 favoritesPortedToKAstats=true
+icon=applications-other
+systemFavorites=suspend\\,hibernate\\,reboot\\,shutdown
 
 [Containments][2][Applets][3][Configuration][Shortcuts]
 global=Alt+F1
@@ -66,6 +74,9 @@ plugin=org.kde.plasma.pager
 immutability=1
 plugin=org.kde.plasma.icontasks
 
+[Containments][2][Applets][5][Configuration][General]
+launchers=applications:systemsettings.desktop,applications:org.manjaro.pamac.manager.desktop,preferred://filemanager,preferred://browser
+
 [Containments][2][Applets][6]
 immutability=1
 plugin=org.kde.plasma.marginsseparator
@@ -75,7 +86,7 @@ immutability=1
 plugin=org.kde.plasma.systemtray
 
 [Containments][2][Applets][7][Configuration]
-PreloadWeight=55
+PreloadWeight=60
 SystrayContainmentId=8
 
 [Containments][2][General]
@@ -88,6 +99,8 @@ immutability=1
 lastScreen=0
 location=4
 plugin=org.kde.plasma.private.systemtray
+popupHeight=432
+popupWidth=432
 wallpaperplugin=org.kde.image
 
 [Containments][8][Applets][10]
@@ -132,6 +145,9 @@ plugin=org.kde.plasma.nightcolorcontrol
 [Containments][8][Applets][21]
 immutability=1
 plugin=org.kde.plasma.battery
+
+[Containments][8][Applets][21][Configuration]
+PreloadWeight=55
 
 [Containments][8][Applets][22]
 immutability=1
