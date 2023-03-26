@@ -39,6 +39,8 @@ mkdir /home/$1/Documents;
 mkdir /home/$1/Pictures;
 mkdir /home/$1/Videos;
 mkdir /home/$1/Music;
+mkdir /home/$1/Public;
+mkdir /home/$1/Templates;
 
 chown -R $1 /home/$1
 
