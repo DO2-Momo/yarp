@@ -113,7 +113,7 @@ pub fn filter_packages(packages: &mut Vec<String>) {
 ///  `content` - A mutable string reference containing the file raw text data
 ///  `pack_name` - The package pack file name
 /// 
-pub fn read_packages_bundle(content: &mut String, pack_name: &str) -> String {
+pub fn read_packages_bundle(content: &mut String, pack_name: &str, device_name: &str) -> String {
   let mut ans = String::new();
 
   let mut path: String = "./packages/".to_owned();
@@ -123,7 +123,12 @@ pub fn read_packages_bundle(content: &mut String, pack_name: &str) -> String {
 
   let mut file = match file_handler {
     Ok(file) => file,
-    Err(error) => panic!("Package files not found! {:?}", error)
+    Err(error) => {
+      yarp_panic(device_name, &format!("Package file '{}' not found!", pack_name));
+      
+      // Unreachable panic, pleasing the compiler ;)
+      panic!("{:?}", error);
+    }
   };
 
   file.read_to_string(&mut ans)
@@ -144,34 +149,34 @@ pub fn read_packages_bundle(content: &mut String, pack_name: &str) -> String {
 /// # Returns
 /// 
 /// A handler with the package names
-pub fn get_packages(params: PackageProfile) -> std::io::Result<Vec<String>> {
+pub fn get_packages(params: PackageProfile, device_name: &str) -> std::io::Result<Vec<String>> {
 
   let mut content = String::new();
 
-  read_packages_bundle(&mut content, "base");
+  read_packages_bundle(&mut content, "base", device_name);
 
   if params.multimedia == true {
-    read_packages_bundle(&mut content, "multimedia");
+    read_packages_bundle(&mut content, "multimedia", device_name);
   }
 
   if params.nightly == true {
-    read_packages_bundle(&mut content, "nightly");
+    read_packages_bundle(&mut content, "nightly", device_name);
   }
 
   if params.desktop == true {
-    read_packages_bundle(&mut content, "desktop");
+    read_packages_bundle(&mut content, "desktop", device_name);
   }
 
   if params.utils == true {
-    read_packages_bundle(&mut content, "utils");
+    read_packages_bundle(&mut content, "utils", device_name);
   }
 
   if params.amd_gpu == true {
-    read_packages_bundle(&mut content, "amd_gpu");
+    read_packages_bundle(&mut content, "amd_gpu", device_name);
   }
 
   if params.intel_gpu == true {
-    read_packages_bundle(&mut content, "intel_gpu");
+    read_packages_bundle(&mut content, "intel_gpu", device_name);
   }
 
   let split = content.split("\n");
@@ -197,8 +202,8 @@ pub fn pacstrap(packages: Vec<&str>) -> std::io::Result<()>  {
     .arg("-K").arg("/mnt")
     .args(packages)
     .stdout(Stdio::inherit())
-    .spawn()
-    .unwrap();
+    .spawn().expect("FAILED");
+
 
   let _res = install_packages.wait().expect("FAILED");
 
@@ -310,28 +315,38 @@ pub fn install<'a>(data: &UserData) {
 
   // Device manipulation
   device_manipulation(data, &part_info, &partitions_mb, is_legacy());
-  
 
   // Get all specified packages
-  let packages:Vec<String> = get_packages(data.packages).unwrap();
+  let packages:Vec<String> = get_packages(data.packages, &data.device.name).unwrap();
   
   // Install all packages
-  pacstrap(packages.iter().map(|s| s as &str).collect())
-    .expect("FAILED");
+  let pacstrap_result = 
+    pacstrap(packages.iter().map(|s| s as &str).collect());
+
+  // If pacstrap failed in the case of No Network or Unstable Network
+  // Trigger a yarp_panic
+  match pacstrap_result.unwrap().code() {
+    Some(code) => {
+      if code != 0 {
+        yarp_panic(&data.device.name, "ERROR while installing packages, check your network connection");
+      }
+    },
+    None => println!("Process terminated by signal")
+  }
   
   // Generate fstab file 
   partitions::genfstab();
 
   copy_root()
     .expect("root copy failed");
-  
+
   write_hostname(&data.hostname);
 
   // enable chroot script
   enable_install_script()
     .expect("Can't chmod install script");
 
-  sleep(Duration::from_secs(1));
+  sleep(Duration::from_millis(1000));
 
   // Run chroot script
   chroot(&data);
@@ -343,10 +358,27 @@ pub fn install<'a>(data: &UserData) {
     .expect("Couldn't unmount partitions");
 
   
-  sleep(Duration::from_secs(2));
+  sleep(Duration::from_millis(2000));
 
   repair_fs(&data.device.name, &partitions_mb);
 
 
   println!("\n--- THE DEVICE SUCCESSFULLY INSTALLED ---");
+}
+
+///
+/// # Arguments
+///   `device_name` - The name of the device
+///   `message` - The message to display during the panic
+/// 
+pub fn yarp_panic(device_name: &str, message: &str) {
+  println!("\n\n\x1b[31mERROR\x1b[0m:\n{}\n\n", message);
+
+  sleep(Duration::from_millis(500));
+
+  // Unmount all partitions
+  partitions::umount(device_name)
+    .expect("Couldn't unmount partitions");
+
+  panic!("\x1b[31mYARP ERROR\x1b[0m");
 }
