@@ -120,7 +120,7 @@ pub fn read_packages_bundle(content: &mut String, pack_name: &str, device_name: 
   path.push_str(pack_name); path.push_str(".x86_64");
 
   let file_handler = fs::File::open(&path);
-
+  
   let mut file = match file_handler {
     Ok(file) => file,
     Err(error) => {
