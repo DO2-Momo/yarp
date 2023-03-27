@@ -196,7 +196,7 @@ pub fn get_packages(params: PackageProfile, device_name: &str) -> std::io::Resul
 /// # Arguments
 /// A list of packages
 /// 
-pub fn pacstrap(packages: Vec<&str>) -> std::io::Result<()>  {
+pub fn pacstrap(packages: Vec<&str>) -> std::io::Result<std::process::ExitStatus>  {
 
   let mut install_packages = Command::new("pacstrap")
     .arg("-K").arg("/mnt")
@@ -204,10 +204,7 @@ pub fn pacstrap(packages: Vec<&str>) -> std::io::Result<()>  {
     .stdout(Stdio::inherit())
     .spawn().expect("FAILED");
 
-
-  let _res = install_packages.wait().expect("FAILED");
-
-  Ok(())
+  return install_packages.wait();
 }
 
 /// Change root to device's root and execute installation script
