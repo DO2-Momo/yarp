@@ -230,7 +230,7 @@ fn build_ui(app: &Application) {
     };
 
     let space_size:u64 = ((device.size/1000000) as u64)  - swap_scale.value() as u64 - 300;
-    println!("space_size {}", space_size);
+
     let user_data = UserData {
       user, hostname, 
       device: device,
