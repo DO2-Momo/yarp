@@ -275,13 +275,13 @@ pub fn device_manipulation(
 
 pub fn repair_fs(device_name: &str, partitions_mb: &Vec<u128>) {
   for i in 1..partitions_mb.len() {
-    let mut fsck = Command::new("fsck")
+    let fsck = Command::new("fsck")
       .arg("-r").arg(&partitions::slashdev(device_name, i as u8))
       .output().expect("FAILED");
 
-      fsck.wait().expect("FAILED");
+    println!("{}", str::from_utf8(&fsck.stdout).unwrap());
 
-      sleep(Duration::from_millis(250));
+    sleep(Duration::from_millis(500));
   }
 }
 
