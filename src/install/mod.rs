@@ -351,7 +351,12 @@ pub fn install<'a>(data: &UserData) {
   // Run chroot script
   chroot(&data);
 
-  sleep(Duration::from_secs(2));
+  let install_script_path = Path::new("/install.sh");
+
+  while install_script_path.exists() {
+    println!("waiting for chroot to finish execution ...");
+    sleep(Duration::from_millis(100));
+  }
 
   // Unmount all partitions
   partitions::umount(&data.device.name)
