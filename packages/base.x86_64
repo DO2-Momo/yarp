@@ -1,9 +1,13 @@
 # Kernel & Basic software
  base
+ base-devel
  linux-lts
+ linux-atm
  linux-lts-headers
  linux-firmware
  sof-firmware 
+ mkinitcpio
+ git
 
 # Bootloader
  efibootmgr
@@ -11,7 +15,3 @@
 
 # Network
  networkmanager
-
-# Mainly for the AUR
- base-devel
- go

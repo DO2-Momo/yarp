@@ -1,6 +1,5 @@
 # Mesa hardware acceleration
- lib32-mesa
  mesa
  mesa-amber
- lib32-mesa-amber
  xf86-video-intel
+ intel-ucode

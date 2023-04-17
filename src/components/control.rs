@@ -24,6 +24,3 @@ pub struct PackageProfile {
   pub intel_gpu: bool
 }
 
-pub enum PackageBundle {
-  BASE, DESKTOP, UTILS, NIGHTLY, MULTIMEDIA
-}

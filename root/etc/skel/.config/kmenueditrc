@@ -1,0 +1,14 @@
+[General]
+SplitterSizes=462,635
+
+[MainWindow]
+1920x1080 screen: XPosition=406
+1920x1080 screen: YPosition=323
+2 screens: Height=614
+2 screens: Width=863
+2 screens: XPosition=2883
+2 screens: YPosition=238
+HDMI2 eDP1=eDP1
+State=AAAA/wAAAAD9AAAAAAAABFQAAAFWAAAABAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAWAG0AYQBpAG4AVABvAG8AbABCAGEAcgEAAAAA/////wAAAAAAAAAA
+ToolBarsMovable=Disabled
+eDP1=eDP1

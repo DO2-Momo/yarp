@@ -8,38 +8,13 @@ use gtk::{
   Justification,
   Align,
   EntryBuffer,
-  Entry,
   Scale,
   PositionType,
-  Button
 };
 use gtk::prelude::*;
 
 pub mod control;
 use control::{Form, FormData, PackageProfile};
-
-pub fn package_profile_menu(
-  chk_desktop: CheckButton,
-  chk_utils: CheckButton,
-  chk_multimedia: CheckButton,
-  chk_nightly: CheckButton
-) -> Box {
-
-
-
-  let package_profile_box = Box::builder()
-  .orientation(Orientation::Vertical)
-  .valign(Align::Start)
-  .css_classes(vec![String::from("profile")])
-  .build();
-
-  package_profile_box.append(&chk_desktop);
-  package_profile_box.append(&chk_utils);
-  package_profile_box.append(&chk_multimedia);
-  package_profile_box.append(&chk_nightly);
-
-  return package_profile_box;
-}
 
 /// TODO: FETCH FROM OS
 pub fn hardware_specs(
@@ -60,7 +35,6 @@ pub fn hardware_specs(
     .valign(Align::Start)
     .css_classes(vec![String::from("package-box")])
     .build();
-
 
   package_profile_box.append(&package_label);
   package_profile_box.append(chk_amd_gpu);
@@ -137,16 +111,7 @@ pub fn get_partition_box(
   part_scale.add_mark(100.0, PositionType::Bottom, Some("100%"));
   part_scale.set_draw_value(true);
 
-// get 
-
   let size_label = Label::builder().label("Root: Home:").build();
-
-  // let slider_wrap = Box::builder()
-  //   .css_classes(vec![String::from("slider-wrap")])
-  //   .hexpand(true).vexpand(true)
-  //   .build();
-    
-  // slider_wrap.append(&scale_part_ratio);
 
   let partition_box = Box::builder()
     .orientation(Orientation::Vertical)
@@ -155,22 +120,7 @@ pub fn get_partition_box(
     .css_classes(vec![String::from("partition-box")])
     .build();
 
-  let partition_slider_box = Box::builder()
-    .orientation(Orientation::Horizontal)
-    .hexpand(true)
-    .vexpand(true)
-    .css_classes(vec![String::from("partition-box")])
-    .build();
-
-
-  let swap_size_input = Entry::builder()
-    .input_purpose(InputPurpose::Digits)
-    .css_classes(vec![String::from("swap-field")])
-    .build();
-
-
   partition_box.append(&partition_label);
-
 
   partition_box.append(&swap_label);
   partition_box.append(swap_scale);
@@ -183,7 +133,7 @@ pub fn get_partition_box(
   return partition_box;
 }
 
-pub fn formField(label: &str, buf: &EntryBuffer, hidden: bool ) -> Box {
+pub fn form_field(label: &str, buf: &EntryBuffer, hidden: bool ) -> Box {
   let input = Text::builder()
       .css_classes(vec![String::from("form-input")])
       .buffer(buf)
@@ -191,7 +141,6 @@ pub fn formField(label: &str, buf: &EntryBuffer, hidden: bool ) -> Box {
       .width_request(30)
       .max_length(18)
       .build();
-
 
   if hidden == true {
       input.set_input_purpose(InputPurpose::Password);
@@ -232,7 +181,7 @@ pub fn form(name: &str) -> Form {
   let pbuf = EntryBuffer::builder().build();
   let cbuf = EntryBuffer::builder().build();
 
-  let formData = FormData {
+  let form_data = FormData {
     username: ubuf,
     hostname: hbuf,
     password: pbuf,
@@ -247,10 +196,10 @@ pub fn form(name: &str) -> Form {
     }
   };
 
-  let hostname = formField("username ", &formData.username, false);
-  let username = formField("hostname ", &formData.hostname, false);
-  let password = formField("password ", &formData.password,true);
-  let cpassword = formField("confirm password ", &formData.cpassword, true);
+  let hostname = form_field("username ", &form_data.username, false);
+  let username = form_field("hostname ", &form_data.hostname, false);
+  let password = form_field("password ", &form_data.password,true);
+  let cpassword = form_field("confirm password ", &form_data.cpassword, true);
 
   let container: Box = Box::builder()
       .orientation(Orientation::Vertical)
@@ -266,7 +215,6 @@ pub fn form(name: &str) -> Form {
       .css_classes(vec![String::from("form")])
       .build();
 
-
   form.append(&hostname);
   form.append(&username);
   form.append(&password);
@@ -277,44 +225,11 @@ pub fn form(name: &str) -> Form {
   
   return Form {
     widget: container,
-    data: formData
+    data: form_data
   };
 }
 
-pub fn DeviceRow(name: &str, size: &str) -> Box {
-  let device_row = Box::builder()
-  .orientation(Orientation::Horizontal)
-  .name("device_button")
-  .css_classes(vec![String::from("device-elem")])
-  .build();
- 
-  let check = CheckButton::builder()
-      .name(name)
-      .css_classes(vec![String::from("device-check")])
-      .build();
-
-  device_row.append(&check);
-
-  BoxExt::append(
-    &device_row,
-    &Label::builder() 
-        .label(name)
-        .css_classes(vec![String::from("device-label")])
-        .build()
-  );
-
-  BoxExt::append(
-    &device_row,
-    &Label::builder() 
-        .label(size)
-        .css_classes(vec![String::from("device-label")])
-        .build()
-  );
-
-  return device_row;
-}
-
-pub fn getLabel(name: &str, size: &str) -> String {
+pub fn get_label(name: &str, size: &str) -> String {
   let mut buf: Vec<&str> = Vec::<&str>::new();
   buf.push(name);
   buf.push(size);
@@ -322,26 +237,4 @@ pub fn getLabel(name: &str, size: &str) -> String {
   return buf.join("     ");
 }
 
-pub fn success() -> Box {
 
-  let button = Button::builder()
-    .label("Ok").build();
-
-  let label = Label::builder()
-    .label("Success").build();
-
-  let success = Box::builder().visible(false).build();
-
-  success.append(&label);
-  success.append(&button);
-
-  return success;
-
-}
-
-/**
- * TODO: Implement validation prompt
- */
-pub fn prompt_user(data: &FormData)  {
-
-}

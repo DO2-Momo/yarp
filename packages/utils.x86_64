@@ -1,13 +1,13 @@
 # Office utilities
  libreoffice-still
 
-# Web browsing
- firefox
-
 # Calculator
- gnome-calculator
+ kcalc
 
-# Imaging utilities
- evince
- shotwell
- flameshot
+# Images
+ gwenview
+ spectacle
+ 
+ # Zip/Unzip Apps
+ Zip
+ Unzip

@@ -2,7 +2,6 @@
 
 use crate::config::UserData;
 use crate::install::install;
-use crate::install::get_packages;
 
 pub fn validate_config<'a>(data: &UserData) {
     

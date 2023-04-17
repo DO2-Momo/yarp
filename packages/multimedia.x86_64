@@ -5,11 +5,13 @@
  pulseaudio-alsa 
  pulseaudio-bluetooth 
  opus 
- vlc 
+ vlc
+ jack2
 
 # Video 
  vlc 
  gstreamer
+ phonon-qt5-gstreamer
  ffmpeg 
  libdvdcss 
  libvpx
@@ -17,3 +19,6 @@
 # Bluetooth 
  bluez 
  bluez-utils
+
+# FS
+ ntfs-3g
