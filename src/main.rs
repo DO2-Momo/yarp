@@ -9,6 +9,9 @@ use crate::config::{User, UserData};
 use crate::sysinfo::{Devices};
 use crate::components::control::{PackageProfile};
 
+use std::cell::RefCell;
+
+
 use std::{str};
 use gtk::gdk::Display;
 use gtk::prelude::*;
@@ -203,8 +206,14 @@ fn build_ui(app: &Application) {
     &original_state.to_variant(),
   );
 
+  let has_been_clicked = RefCell::new(false);
+
   // Connect to "clicked" signal of `confirm_button`
   confirm_button.connect_clicked(move |_| {
+    let mut clicked = has_been_clicked.borrow_mut();
+
+    if *clicked { return; }
+    *clicked = true;
 
     // TODO: Implement validation prompt 
     // prompt_user(&form.data);
@@ -244,7 +253,10 @@ fn build_ui(app: &Application) {
     };
 
     // Validate configuration & Start installation if is valid
-    validation::validate_config(&user_data);
+    *clicked = validation::validate_config(&user_data);
+
+    return;
+
   });
 
 
