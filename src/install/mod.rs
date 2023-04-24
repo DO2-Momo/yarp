@@ -357,8 +357,8 @@ pub fn install<'a>(data: &UserData) {
 
   repair_fs(&data.device.name, &partitions_mb);
 
-  println!("\n--- THE DEVICE SUCCESSFULLY INSTALLED ---");
-  println!("\n--- You can safely exit the application ---");
+  println!("\x1b[91m\n--- THE DEVICE SUCCESSFULLY INSTALLED ---");
+  println!("\n\n\n\nPress 'Super + Tab' to open a shutdown menu...\x1b[0m");
 }
 
 ///
