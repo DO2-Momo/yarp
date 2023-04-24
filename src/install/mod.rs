@@ -5,6 +5,7 @@ use crate::config::{UserData, PartData};
 use crate::components::control::{PackageProfile};
 use crate::sysinfo::Device;
 
+
 use std::path::Path;
 
 use std::thread::sleep;
@@ -220,7 +221,7 @@ pub fn chroot(
   let mut chroot = Command::new("arch-chroot")
     .args(vec!["/mnt", "/install.sh"])
     .arg(&data.user.name).arg(&data.user.password)
-    .arg(if is_legacy() { "true" } else { "false" })
+    .arg(if data.is_legacy { "true" } else { "false" })
     .arg(&partitions::slashdev(&data.device.name, 0))
     .spawn()
     .expect("FAILED");
@@ -282,15 +283,6 @@ pub fn repair_fs(device_name: &str, partitions_mb: &Vec<u128>) {
   }
 }
 
-///
-/// Detect if parent system booted in UEFI or Legacy mode
-/// 
-/// # Returns
-///   Whether or not the system was booted in Legacy mode
-/// 
-pub fn is_legacy() -> bool {
-  return !Path::new("/sys/firmware/efi").exists();
-}
 
 /// Install process
 /// 
@@ -300,6 +292,8 @@ pub fn is_legacy() -> bool {
 /// 
 pub fn install<'a>(data: &UserData) {
 
+  println!(" --- INSTALLTION START --- ");
+  
   let partitions_mb: Vec<u128> = logic::calculate_partitions(
     data.device,
     data.swap as u128,
@@ -310,7 +304,7 @@ pub fn install<'a>(data: &UserData) {
   let part_info:Vec<PartData> = get_partitions_fs(); 
 
   // Device manipulation
-  device_manipulation(data, &part_info, &partitions_mb, is_legacy());
+  device_manipulation(data, &part_info, &partitions_mb, data.is_legacy);
 
   // Get all specified packages
   let packages:Vec<String> = get_packages(data.packages, &data.device.name).unwrap();
@@ -363,8 +357,8 @@ pub fn install<'a>(data: &UserData) {
 
   repair_fs(&data.device.name, &partitions_mb);
 
-
   println!("\n--- THE DEVICE SUCCESSFULLY INSTALLED ---");
+  println!("\n--- You can safely exit the application ---");
 }
 
 ///

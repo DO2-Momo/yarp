@@ -2,6 +2,9 @@
 use std::process::Command;
 use std::str;
 
+
+use std::path::Path;
+
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -32,6 +35,16 @@ impl Devices {
   pub fn get(&self, key: usize) -> &Device {
     return &self.blockdevices[key];
   }
+}
+
+///
+/// Detect if parent system booted in UEFI or Legacy mode
+/// 
+/// # Returns
+///   Whether or not the system was booted in Legacy mode
+/// 
+pub fn is_legacy() -> bool {
+  return !Path::new("/sys/firmware/efi").exists();
 }
 
 pub fn get_devices() -> Devices {

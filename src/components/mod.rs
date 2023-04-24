@@ -16,8 +16,37 @@ use gtk::prelude::*;
 pub mod control;
 use control::{Form, FormData, PackageProfile};
 
-/// TODO: FETCH FROM OS
-pub fn hardware_specs(
+pub fn legacy_radiobuttons(
+  rdo_legacy: &CheckButton,
+  rdo_uefi: &CheckButton,
+  rdo_auto: &CheckButton
+) -> Box {
+
+  let package_label = Label::builder()
+    .label("Partitioning:")
+    .justify(Justification::Left)
+    .xalign(0.0)
+    .css_classes(vec![String::from("section-title")])
+    .build();
+
+  let package_profile_box = Box::builder()
+    .orientation(Orientation::Vertical)
+    .halign(Align::Start)
+    .valign(Align::Start)
+    .css_classes(vec![String::from("package-box")])
+    .build();
+
+  package_profile_box.append(&package_label);
+  package_profile_box.append(rdo_legacy);
+  package_profile_box.append(rdo_uefi);
+  package_profile_box.append(rdo_auto);
+
+  rdo_auto.set_active(true);
+
+  return package_profile_box;
+}
+
+pub fn drivers_checkboxes(
   chk_amd_gpu: &CheckButton,
   chk_intel_gpu: &CheckButton
 ) -> Box {
@@ -37,8 +66,10 @@ pub fn hardware_specs(
     .build();
 
   package_profile_box.append(&package_label);
-  package_profile_box.append(chk_amd_gpu);
+
   package_profile_box.append(chk_intel_gpu);
+  package_profile_box.append(chk_amd_gpu);
+  chk_intel_gpu.set_active(true);
 
   return package_profile_box;
 }
@@ -68,6 +99,10 @@ pub fn get_package_profile_box(
   package_profile_box.append(chk_utils);
   package_profile_box.append(chk_multimedia);
   package_profile_box.append(chk_nightly);
+
+  chk_desktop.set_active(true);
+  chk_utils.set_active(true);
+  chk_multimedia.set_active(true);
 
   return package_profile_box;
 } 
@@ -111,8 +146,6 @@ pub fn get_partition_box(
   part_scale.add_mark(100.0, PositionType::Bottom, Some("100%"));
   part_scale.set_draw_value(true);
 
-  let size_label = Label::builder().label("Root: Home:").build();
-
   let partition_box = Box::builder()
     .orientation(Orientation::Vertical)
     .hexpand(true)
@@ -127,7 +160,6 @@ pub fn get_partition_box(
 
   partition_box.append(root_home_ratio_label);
   partition_box.append(part_scale);
-  partition_box.append(&size_label);
 
 
   return partition_box;

@@ -73,6 +73,14 @@ fn get_device_labels(device_data: &Devices) -> Vec<String> {
   return device_names;
 }
 
+fn is_legacy(rdo_legacy: &CheckButton, rdo_auto: &CheckButton) -> bool {
+  let mut legacy = rdo_legacy.is_active();
+  if rdo_auto.is_active() {
+    legacy = sysinfo::is_legacy();
+  }
+  return legacy;
+}
+
 ///
 /// Build GTK GUI
 ///
@@ -127,8 +135,25 @@ fn build_ui(app: &Application) {
   let chk_intel_gpu:CheckButton  = CheckButton::with_label("Intel GPU Drivers");
   let chk_amd_gpu:CheckButton    = CheckButton::with_label("AMD GPU Drivers");
 
-  let hardware_profile_box = components::hardware_specs(
-    &chk_intel_gpu, &chk_amd_gpu
+  let drivers_checkboxes = components::drivers_checkboxes(
+    &chk_amd_gpu, &chk_intel_gpu
+  );
+
+  let rdo_legacy:CheckButton     = CheckButton::with_label("MBR/BIOS (Legacy)");
+  let rdo_uefi:CheckButton       = CheckButton::with_label("GPT/UEFI");
+  let rdo_auto:CheckButton       = CheckButton::with_label("Auto");
+
+  let group_button = CheckButton::new();
+  let group_option = Some(&group_button);
+
+  rdo_legacy.set_group(group_option);
+
+  rdo_uefi.set_group(group_option);
+
+  rdo_auto.set_group(group_option);
+
+  let legacy_radiobuttons = components::legacy_radiobuttons(
+    &rdo_legacy, &rdo_uefi, &rdo_auto
   );
 
   // Partitions
@@ -246,7 +271,7 @@ fn build_ui(app: &Application) {
       packages: packages,
       swap: swap_scale.value() as u64,
       ratio: part_scale.value(),
-
+      is_legacy: is_legacy(&rdo_legacy, &rdo_auto),
       // TODO: Clean this math up
       root: ((part_scale.value()/100.0) * space_size as f64) as u64,
       home: (((100.0 - part_scale.value())/100.0) * space_size as f64) as u64 
@@ -259,16 +284,14 @@ fn build_ui(app: &Application) {
 
   });
 
-
   // Add to main continer 
-
   main_box.append(&device_box);
 
+  form.widget.append(&drivers_checkboxes);
+  form.widget.append(&legacy_radiobuttons);
 
-  form.widget.append(&hardware_profile_box);
   flex.append(&form.widget);
   flex.append(&right_box);
-
   
   main_box.append(&flex);
 
