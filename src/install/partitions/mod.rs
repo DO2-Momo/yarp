@@ -123,8 +123,7 @@ pub fn make_uefi(partitions_mb: &Vec<u128>, devname: &str) {
 /// 
 pub fn make_fs(part_info: &Vec<PartData>, device_name: &str, is_legacy: bool) {
     // Make file systems according to part_info
-    let start = if is_legacy { 1 } else { 0 };
-    for i in start..part_info.len() {
+    for i in 0..part_info.len() {
         println!("{}", &slashdev!(device_name, (i + 1) as u8));
 
         let mut mkfs = Command::new(part_info[i].fs)
