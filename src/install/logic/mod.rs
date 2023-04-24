@@ -15,14 +15,15 @@ pub fn calculate_partitions(
     device: &Device,
     swap: u128,
     root_home_ratio: f64,
-    has_home:bool) -> Vec<u128>
+    has_home:bool,
+    is_legacy: bool) -> Vec<u128>
 {
     let mut sizes = Vec::<u128>::new();
     let size = to_mb(device.size);
     let efi: u128 = 105;
 
-    sizes.push(0);
-    sizes.push(efi);
+    sizes.push(if is_legacy { 4000 } else { 0 });
+    sizes.push(efi + sizes[sizes.len()-1]);
     sizes.push(swap + sizes[sizes.len()-1]);
 
     if !has_home {

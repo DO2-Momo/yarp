@@ -49,7 +49,7 @@ pub fn make_mbr(partitions_mb: &Vec<u128>, devname: &str) {
     parted_label.wait().expect("FAILED");
   
     // Make partitions
-    for i in 0..(partitions_mb.len()-1) {
+    for i in 1..(partitions_mb.len()-1) {
       // Launch parted
       let mut parted = Command::new("parted")
         .args(vec![
@@ -121,9 +121,10 @@ pub fn make_uefi(partitions_mb: &Vec<u128>, devname: &str) {
 ///
 ///  Make file systems according to partition data
 /// 
-pub fn make_fs(part_info: &Vec<PartData>, device_name: &str) {
+pub fn make_fs(part_info: &Vec<PartData>, device_name: &str, is_legacy: bool) {
     // Make file systems according to part_info
-    for i in 0..part_info.len() {
+    let start = if is_legacy { 1 } else { 0 };
+    for i in start..part_info.len() {
         println!("{}", &slashdev!(device_name, (i + 1) as u8));
 
         let mut mkfs = Command::new(part_info[i].fs)
@@ -203,7 +204,7 @@ pub fn umount(devname: &str) -> std::io::Result<()> {
 ///
 /// `has_home` - Whether or not to mount a home directorys
 ///
-pub fn mount(devname: &str, has_home:bool) {
+pub fn mount(devname: &str, has_home:bool, is_legacy: bool) {
 
     // Mount root
     let mut mount_root = Command::new("mount")
@@ -223,14 +224,16 @@ pub fn mount(devname: &str, has_home:bool) {
     swapon.wait().expect("FAILED");
   
     // Mount boot
-    let mut mount_boot = Command::new("mount")
-    .arg("--mkdir").arg(slashdev!(devname, 1))
-    .arg("/mnt/boot/efi")
-    .spawn()
-    .expect("FAILED");
-  
-    mount_boot.wait().expect("FAILED");
-  
+    if is_legacy {
+        let mut mount_boot = Command::new("mount")
+        .arg("--mkdir").arg(slashdev!(devname, 1))
+        .arg("/mnt/boot/efi")
+        .spawn()
+        .expect("FAILED");
+    
+        mount_boot.wait().expect("FAILED");
+    }
+
     // Mount home parition if exists
     if has_home  {
       let mut mount_home = Command::new("mount")

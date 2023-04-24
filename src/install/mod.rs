@@ -265,9 +265,9 @@ pub fn device_manipulation(
     );
   }
   
-  partitions::make_fs(part_info, &data.device.name);
+  partitions::make_fs(part_info, &data.device.name, is_legacy);
 
-  partitions::mount(&data.device.name, data.ratio != 100.0);
+  partitions::mount(&data.device.name, data.ratio != 100.0, is_legacy);
   // // // // // // // // // // // // //
 }
 
@@ -298,7 +298,8 @@ pub fn install<'a>(data: &UserData) {
     data.device,
     data.swap as u128,
     (data.ratio/100.0) as f64,
-    data.ratio != 100.0
+    data.ratio != 100.0,
+    data.is_legacy
   );
 
   let part_info:Vec<PartData> = get_partitions_fs(); 
