@@ -22,7 +22,7 @@ pub fn calculate_partitions(
     let size = to_mb(device.size);
     let efi: u128 = 105;
 
-    sizes.push(if is_legacy { 4000 } else { 0 });
+    sizes.push(if is_legacy { 8 } else { 0 });
     sizes.push(efi + sizes[sizes.len()-1]);
     sizes.push(swap + sizes[sizes.len()-1]);
 
