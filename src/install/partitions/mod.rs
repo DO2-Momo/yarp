@@ -49,7 +49,7 @@ pub fn make_mbr(partitions_mb: &Vec<u128>, devname: &str) {
     parted_label.wait().expect("FAILED");
   
     // Make partitions
-    for i in 1..(partitions_mb.len()-1) {
+    for i in 0..(partitions_mb.len()-1) {
       // Launch parted
       let mut parted = Command::new("parted")
         .args(vec![
@@ -124,6 +124,11 @@ pub fn make_uefi(partitions_mb: &Vec<u128>, devname: &str) {
 pub fn make_fs(part_info: &Vec<PartData>, device_name: &str, is_legacy: bool) {
     // Make file systems according to part_info
     for i in 0..part_info.len() {
+        // Avoid making fs for first partition if is legacy
+        if is_legacy && i == 0 {
+            continue;
+        }
+
         println!("{}", &slashdev!(device_name, (i + 1) as u8));
 
         let mut mkfs = Command::new(part_info[i].fs)
